@@ -1,5 +1,5 @@
 ﻿#Initial Script written by Tom Sightler for VMWare
-#Converted to Hyper-V
+#Dave Converted this to work with Hyper-V
 # Verify protected VM's in Hyper-V
 #
 <#
