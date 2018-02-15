@@ -467,5 +467,18 @@ Author - Dave Kawula
         #endregion
 
  }
+
+ function Write-Log {
+    param
+    (
+        [string]$systemName,
+        [string]$message
+    )
+
+    Write-Host -Object (Get-Date).ToShortTimeString() -ForegroundColor Cyan -NoNewline
+    Write-Host -Object ' - [' -ForegroundColor White -NoNewline
+    Write-Host -Object $systemName -ForegroundColor Yellow -NoNewline
+    Write-Host -Object "]::$($message)" -ForegroundColor White
+}
  }
  
