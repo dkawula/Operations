@@ -63,7 +63,7 @@ Author - Dave Kawula
         $openFile.Filter = "iso files (*.iso)|*.iso|All files (*.*)|*.*" 
         If($openFile.ShowDialog() -eq "OK")
         {
-            Write-Log  "File $($openfile.FileName) selected"
+              Write-Output -InputObject  "File $($openfile.FileName) selected"
         } 
         if (!$openFile.FileName){
                 WriteErrorAndExit  "Iso was not selected... Exitting"
@@ -79,7 +79,7 @@ Author - Dave Kawula
         $openFile.Filter = "lic files (*.lic)|*.lic|All files (*.*)|*.*" 
         If($openFile.ShowDialog() -eq "OK")
         {
-            Write-Log  "File $($openfile.FileName) selected"
+              Write-Output -InputObject  "File $($openfile.FileName) selected"
         } 
         if (!$openFile.FileName){
                 WriteErrorAndExit  "Iso was not selected... Exitting"
@@ -468,17 +468,5 @@ Author - Dave Kawula
 
  }
 
- function Write-Log {
-    param
-    (
-        [string]$systemName,
-        [string]$message
-    )
-
-    Write-Host -Object (Get-Date).ToShortTimeString() -ForegroundColor Cyan -NoNewline
-    Write-Host -Object ' - [' -ForegroundColor White -NoNewline
-    Write-Host -Object $systemName -ForegroundColor Yellow -NoNewline
-    Write-Host -Object "]::$($message)" -ForegroundColor White
-}
  }
  
