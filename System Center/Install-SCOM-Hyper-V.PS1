@@ -59,7 +59,7 @@ Author - Dave Kawula
   )
      
 
-     #Ask for Veeam ISO
+     #Ask for SCOM Exe
 
         [reflection.assembly]::loadwithpartialname("System.Windows.Forms")
         $openFile = New-Object System.Windows.Forms.OpenFileDialog -Property @{
@@ -74,8 +74,8 @@ Author - Dave Kawula
                 WriteErrorAndExit  "Iso was not selected... Exitting"
             }
             $SCOMEXE = $openfile.FileName
-            #$VeeamISO
-      #Ask for Veeam License
+
+
 
        
      $DomainCred = Get-Credential
