@@ -1,5 +1,4 @@
-﻿Function Install-Veeam  {
-  <#
+﻿ <#
 Created:	 2018-02-01
 Version:	 1.0
 Author       Dave Kawula MVP
@@ -20,7 +19,8 @@ Author - Dave Kawula
     This Script was part of my BIGDemo series and I have broken it out into a standalone function
 
     You will need to have a Veeam Service Account Pre-Created, Veeam B&R ISO and Product Key for this lab to work
-    Those ISO and License file will need to be stored in the root of the $WorkingDir
+    The Script will prompt for the path of the ISO and .LIC files
+    The Script will prompt for an Admin Account which will be used in $DomainCred
     If your File names are different than mine adjust accordingly.
 
     We will use PowerShell Direct to setup the Veeam Server in Hyper-V
@@ -42,6 +42,9 @@ Author - Dave Kawula
     Usage: Install-Veeam -Vmname YOURVM -GuestOS VEEAMSERVER -VMpath f:\VMs\Veeam -WorkingDir f:\Temp
 #>
   #Installs Veeam 9.5 and UR 3
+  
+  Function Install-Veeam {
+  
   param
   (
     [string]$VMName, 
@@ -49,14 +52,52 @@ Author - Dave Kawula
     [string]$VMPath,
     [string]$WorkingDir
   )
-    #Domain Admin User and Password
-    $DomainCred = Get-Credential 
+     
+
+     #Ask for Veeam ISO
+
+        [reflection.assembly]::loadwithpartialname("System.Windows.Forms")
+        $openFile = New-Object System.Windows.Forms.OpenFileDialog -Property @{
+            Title="Please Select the Veeam 9.5 UR3 ISO"
+        }
+        $openFile.Filter = "iso files (*.iso)|*.iso|All files (*.*)|*.*" 
+        If($openFile.ShowDialog() -eq "OK")
+        {
+            Write-Log  "File $($openfile.FileName) selected"
+        } 
+        if (!$openFile.FileName){
+                WriteErrorAndExit  "Iso was not selected... Exitting"
+            }
+            $VeeamISO = $openfile.FileName
+            #$VeeamISO
+      #Ask for Veeam License
+
+       [reflection.assembly]::loadwithpartialname("System.Windows.Forms")
+        $openFile = New-Object System.Windows.Forms.OpenFileDialog -Property @{
+            Title="Please Select the Veeam License File"
+        }
+        $openFile.Filter = "lic files (*.lic)|*.lic|All files (*.*)|*.*" 
+        If($openFile.ShowDialog() -eq "OK")
+        {
+            Write-Log  "File $($openfile.FileName) selected"
+        } 
+        if (!$openFile.FileName){
+                WriteErrorAndExit  "Iso was not selected... Exitting"
+            }
+            $VeeamLic = $openfile.FileName
+            #$VeeamLic
+
+
+     $DomainCred = Get-Credential
+     #$VMName = 'Management01'
+     #$GuestOSname = 'Management01'
+     #$VMPath = 'f:\dcbuild_Test\VMs'
     
     Write-Output -InputObject "[$($VMName)]:: Adding Drive for Veeam Install"
 
-    New-VHD -Path "$($VMPath)\$($GuestOSName) - Veeam Data 1.vhdx" -Dynamic -SizeBytes 60GB 
-    Mount-VHD -Path "$($VMPath)\$($GuestOSName) - Veeam Data 1.vhdx"
-    $DiskNumber = (Get-Diskimage -ImagePath "$($VMPath)\$($GuestOSName) - Veeam Data 1.vhdx").Number
+    New-VHD -Path "$($VMPath)\$($GuestOSName) - Veeam Data 4.vhdx" -Dynamic -SizeBytes 60GB
+    Mount-VHD -Path "$($VMPath)\$($GuestOSName) - Veeam Data 4.vhdx"
+    $DiskNumber = (Get-Diskimage -ImagePath "$($VMPath)\$($GuestOSName) - Veeam Data 4.vhdx").Number
     Initialize-Disk -Number $DiskNumber -PartitionStyle GPT 
     Get-Disk -Number $DiskNumber | New-Partition -UseMaximumSize -AssignDriveLetter | Format-Volume -FileSystem NTFS -NewFileSystemLabel "Veeam" -Confirm:$False
     $Driveletter = get-wmiobject -class "Win32_Volume" -namespace "root\cimv2" | where-object {$_.Label -like "Veeam*"}
@@ -64,11 +105,11 @@ Author - Dave Kawula
     
     
     Write-Output -InputObject "[$($VMName)]:: Copying Veeam ISO and Rollups into the new VHDx"
-    Copy-Item -Path "$($WorkingDir)\VeeamBackup&Replication_9.5.0.1536.Update3.iso" -Destination "$($VeeamDriveLetter)\VeeamBackup&Replication_9.5.0.1536.Update3.iso" -Force
+    Copy-Item -Path $VeeamIso -Destination "$($VeeamDriveLetter)\VeeamBackup&Replication_9.5.0.1536.Update3.iso" -Force
     Write-Output -InputObject "[$($VMName)]:: Copying Veeam license and Rollups into the new VHDx"
-    Copy-Item -Path "$($WorkingDir)\veeam_backup_nfr_0_12.lic" -Destination "$($VeeamDriveLetter)\veeam_backup_nfr_0_12.lic" -Force
-    Dismount-VHD -Path "$($VMPath)\$($GuestOSName) - Veeam Data 1.vhdx"
-    Add-VMHardDiskDrive -VMName $VMName -Path "$($VMPath)\$($GuestOSName) - Veeam Data 1.vhdx" -ControllerType SCSI
+    Copy-Item -Path $VeeamLic -Destination "$($VeeamDriveLetter)\veeam_backup_nfr_0_12.lic" -Force
+    Dismount-VHD -Path "$($VMPath)\$($GuestOSName) - Veeam Data 3.vhdx"
+    Add-VMHardDiskDrive -VMName $VMName -Path "$($VMPath)\$($GuestOSName) - Veeam Data 4.vhdx" -ControllerType SCSI
   
 
     
@@ -427,3 +468,4 @@ Author - Dave Kawula
 
  }
  }
+ 
