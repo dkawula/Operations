@@ -114,6 +114,8 @@ Author - Dave Kawula
      #$SQL = 'VMM01\MSSQLSERVER'
      #$SCOMDrive = 'd:'
 
+   
+     
       icm -VMName $VMName -Credential $DomainCred {
 
       Write-Output -InputObject "[$($VMName)]:: Configure DPM Service Account as a Local Admin"
@@ -151,6 +153,7 @@ Author - Dave Kawula
     Dismount-VHD -Path "$($VMPath)\$($GuestOSName) - SQL Data 2.vhdx"
     Add-VMHardDiskDrive -VMName $VMName -Path "$($VMPath)\$($GuestOSName) - SQL Data 2.vhdx" -ControllerType SCSI
   
+
 
     icm -VMName $VMName -Credential $domainCred {
       
@@ -227,7 +230,7 @@ INSTALLSHAREDWOWDIR="$SQLDrive\Program Files (x86)\Microsoft SQL Server"
 INSTANCEID="MSSQLSERVER"
 ; Specifies which mode report server is installed in.  
 ; Default value: “FilesOnly”  
-RSINSTALLMODE="FilesOnlyMode"
+RSINSTALLMODE="DefaultNativeMode"
 ; TelemetryUserNameConfigDescription 
 SQLTELSVCACCT="NT Service\SQLTELEMETRY"
 ; TelemetryStartupConfigDescription 
