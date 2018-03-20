@@ -175,7 +175,7 @@ Function Initialize-BaseImage
                 SourcePath          = $ServerISO1
                 RemoteDesktopEnable = $True  
                 Passthru            = $True  
-                Edition    = "SERVERDATACENTERACORE"
+                Edition    = "SERVERDATACENTER"
                 VHDFormat = "VHDX"
                 SizeBytes = 60GB
                 WorkingDirectory = $workingdir
