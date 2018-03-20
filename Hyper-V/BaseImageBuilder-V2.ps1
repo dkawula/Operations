@@ -346,7 +346,7 @@ $BaseVHDPath = "$($WorkingDir)\BaseVHDs"
 #$ServerISO1
 
 
-$WindowsKey = 'QJP9N-Q6RY7-VTP6Y-2MTF8-BWR7R' #Dave's Technet KEY Remove for Publishing of Book
+$WindowsKey = '<PRODUCTKEY>' #Dave's Technet KEY Remove for Publishing of Book
 
 $unattendSource = [xml]@"
 <?xml version="1.0" encoding="utf-8"?>
@@ -355,7 +355,7 @@ $unattendSource = [xml]@"
     <settings pass="specialize">
         <component name="Microsoft-Windows-Shell-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
             <ComputerName>*</ComputerName>
-            <ProductKey>QJP9N-Q6RY7-VTP6Y-2MTF8-BWR7R</ProductKey> 
+            <ProductKey><PRODUCTKEY></ProductKey> 
             <RegisteredOrganization>Organization</RegisteredOrganization>
             <RegisteredOwner>Owner</RegisteredOwner>
             <TimeZone>TZ</TimeZone>
