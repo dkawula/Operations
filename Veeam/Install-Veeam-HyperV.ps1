@@ -108,7 +108,7 @@ Author - Dave Kawula
     Copy-Item -Path $VeeamIso -Destination "$($VeeamDriveLetter)\VeeamBackup&Replication_9.5.0.1536.Update3.iso" -Force
     Write-Output -InputObject "[$($VMName)]:: Copying Veeam license and Rollups into the new VHDx"
     Copy-Item -Path $VeeamLic -Destination "$($VeeamDriveLetter)\veeam_backup_nfr_0_12.lic" -Force
-    Dismount-VHD -Path "$($VMPath)\$($GuestOSName) - Veeam Data 3.vhdx"
+    Dismount-VHD -Path "$($VMPath)\$($GuestOSName) - Veeam Data 4.vhdx"
     Add-VMHardDiskDrive -VMName $VMName -Path "$($VMPath)\$($GuestOSName) - Veeam Data 4.vhdx" -ControllerType SCSI
   
 
