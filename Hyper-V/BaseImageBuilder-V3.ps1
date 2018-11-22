@@ -96,11 +96,9 @@ param
     
     [Parameter(Mandatory=$false)]
     [string]
-    $WindowsKey2019 = 'aaaaa-bbbbb-ccccc-ddddd-eeee',
+    $WindowsKey = 'aaaaa-bbbbb-ccccc-ddddd-eeee'
 
-    [Parameter(Mandatory=$false)]
-    [string]
-    $WindowsKey2016 = 'aaaaa-bbbbb-ccccc-ddddd-eeee'
+   
 
 
    
@@ -202,7 +200,7 @@ Function Initialize-BaseImage
 If ($IncludeWindows2019GUI)
 
 {
-    $WindowsKey = $WindowsKey2019
+    
     #New-UnattendFile "$($WorkingDir)\unattend.xml"
     New-UnattendFile1 "$($WorkingDir)\unattend1.xml"
 
@@ -237,7 +235,7 @@ If ($IncludeWindows2019GUI)
 if ($IncludeWindows2019Core)
 {
             
-    $WindowsKey = $WindowsKey2019
+    
     #New-UnattendFile "$($WorkingDir)\unattend.xml"
     New-UnattendFile1 "$($WorkingDir)\unattend1.xml"
   
@@ -273,7 +271,7 @@ if ($IncludeWindows2016GUI)
 
 {
 
-            $WindowsKey = $WindowsKey2016
+            
             New-UnattendFile "$($WorkingDir)\unattend.xml"
             
           
@@ -312,7 +310,9 @@ if ($IncludeWindows2016GUI)
 
 if ($IncludeWindows2016Core)
 {
-            $WindowsKey = $WindowsKey2016
+
+            
+           
             New-UnattendFile "$($WorkingDir)\unattend.xml"
           
     
