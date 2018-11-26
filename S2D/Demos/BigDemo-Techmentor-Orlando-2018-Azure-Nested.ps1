@@ -305,11 +305,6 @@ function Invoke-NodeStorageBuild
   Add-VMNetworkAdapter -VMName $VMName -SwitchName $virtualSwitchName
   Get-VMNetworkAdapter -VMName $VMName | Set-VMNetworkAdapter -AllowTeaming On
   Get-VMNetworkAdapter -VMName $VMName | Set-VMNetworkAdapter -MacAddressSpoofing on
-  # Adding the hidden Registry Key to make S2D Work in Windows Server 2019
-  # https://social.technet.microsoft.com/Forums/en-US/7e7cfd1e-b9e2-410c-b6ab-26f5f564a50e/registry-key-to-enable-s2d-on-windows-server-2019?forum=ws2016&prof=required
-  $Key = "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\CluSvc\Parameters"
-  If  ( -Not ( Test-Path "Registry::$Key")){New-Item -Path "Registry::$Key" -ItemType RegistryKey -Force}
-  Set-ItemProperty -path "Registry::$Key" -Name "S2D" -Type "Dword" -Value "1"
   Start-VM $VMName
   Wait-PSDirect $VMName -cred $localCred
 
