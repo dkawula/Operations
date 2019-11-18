@@ -183,7 +183,8 @@ Function Download-ConvertWindowsImage
     }else{ 
         Write-Log "`t Downloading Convert-WindowsImage"
         try{
-            Invoke-WebRequest -UseBasicParsing -Uri https://raw.githubusercontent.com/MicrosoftDocs/Virtualization-Documentation/live/hyperv-tools/Convert-WindowsImage/Convert-WindowsImage.ps1 -OutFile "$($WorkingDir)\Convert-WindowsImage.ps1"
+           # Invoke-WebRequest -UseBasicParsing -Uri https://raw.githubusercontent.com/MicrosoftDocs/Virtualization-Documentation/live/hyperv-tools/Convert-WindowsImage/Convert-WindowsImage.ps1 -OutFile "$($WorkingDir)\Convert-WindowsImage.ps1"
+           Invoke-WebRequest -UseBasicParsing -Uri https://raw.githubusercontent.com/dkawula/Operations/master/Hyper-V/Convert-WindowsImage.ps1 -OutFile "$($WorkingDir)\Convert-WindowsImage.ps1"
         }catch{
             Write-Log "`t Failed to download convert-windowsimage.ps1!"
         }
