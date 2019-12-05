@@ -34,6 +34,13 @@
         DATE:    2011/10/11
         EMAIL:    info@lazywinadmin.com
 
+        AUTHOR:  Dave Kawula MVP
+        DATE: 2019/12/03
+        EMAIL:  dkawula@triconelite.com
+
+        Made Modifications to use Send-Mailmessage and work with SendGrid
+        Other than that the Script is pretty stock minor modifications
+
         REQUIREMENTS:
         -A Task scheduler to execute the script every x weeks
         -Permission to Read \\DC\admin$, a basic account without specific rights will do it
