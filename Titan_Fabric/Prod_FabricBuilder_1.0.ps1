@@ -552,11 +552,9 @@ Function Install-WSUS {
 
         $u = $updateServer.GetUpdates($updatescope )
 
-        foreach ($u1 in $u )
-        {
+        foreach ($u1 in $u ) {
 
-            if ($u1.IsSuperseded -eq 'True')
-            {
+            if ($u1.IsSuperseded -eq 'True') {
 
                 write-host Decline Update : $u1.Title
 
@@ -570,8 +568,7 @@ Function Install-WSUS {
 
         write-host Total Declined Updates: $count
 
-        trap
-        {
+        trap {
 
             write-host "Error Occurred"
 
@@ -1791,8 +1788,8 @@ Function Install-Veeam {
 
         #region: Variables
         $source = $setup
-     #  $licensefile = "$($VeeamDrive)\veeam_backup_nfr_0_12.lic"
-     #  $username = "svc_veeam"
+        #  $licensefile = "$($VeeamDrive)\veeam_backup_nfr_0_12.lic"
+        #  $username = "svc_veeam"
         $fulluser = "SH\svc_Veeam"
         $password = "P@ssw0rd"
         $CatalogPath = "$($VeeamDrive)\VbrCatalog"
@@ -2130,7 +2127,8 @@ Invoke-FabricVMPrep 'aa_FABDC01' 'FABDC01' -FullServer2019
 Invoke-FabricVmPrep 'aa_FABDC02' 'FABDC02' -FullServer2019
 Invoke-FabricVmPrep 'aa_FABDHCP01' 'FABDHCP01'-FullServer2019
 Invoke-FabricVmPrep 'aa_FABMGMT01' 'FABMGMT01' -FullServer2019
-Invoke-FabricVmPrep 'aa_Router01' 'FABRouter01' -FullServer2019
+Invoke-FabricVmPrep 'aa_FABRouter01' 'FABRouter01' -FullServer2019
+Invoke-FabricVmPrep 'aa_FABWSUS01' 'FABWSUS01' -FullServer2019
 #Invoke-FabricVmPrep 'DRTitan01' 'DRTitan01' -FullServer2019
 #Invoke-DemoVMPrep 'VMM01' 'VMM01' -FullServer2019
 #Invoke-DemoVMPrep 'SCOM01' 'SCOM01' -FullServer2019
