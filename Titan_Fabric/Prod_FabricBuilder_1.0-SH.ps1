@@ -2236,7 +2236,7 @@ Invoke-Command -VMName $VMName -Credential $domainCred {
 #Install-StorageSpacesPool -VMName $VMName -GuestOSName $GuestOSName
 Install-Veeam -VMName $VMName -GuestOSName $GuestOSName -VMPath $VMPath
 #Install-WSUS -VMName $VMName 
-Install-WindowsAdminCenter -VMName $VMName -GuestOSName $GuestOSName
+#Install-WindowsAdminCenter -VMName $VMName -GuestOSName $GuestOSName
 #endregion
 
 $VMName = 'FABWSUS01'
