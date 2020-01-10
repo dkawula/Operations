@@ -1,4 +1,4 @@
-<#
+﻿<#
 Created:	 2020-01-09
 Version:	 1.0
 Author       Dave Kawula MVP
@@ -2114,21 +2114,21 @@ Confirm-Path $VMPath
 #Write-Log 'Host' 'Building Base Images'
 #Write-Log 'Host' 'Downloading January 2018 CU for Windows Server 2016'
 
-if ((Get-VMSwitch | Where-Object -Property name -EQ -Value $virtualSwitchName) -eq $null) {
-    New-VMSwitch -Name $virtualSwitchName -SwitchType Private
-}
-Write-Log 'Host' 'Select the Internet VSwitch for the Lab -- It will be added to the RRAS Router'
-$InternetVSwitch1 = Get-VMSwitch | Where-Object Switchtype -ne Private | Select-Object Name, SwitchType | Out-GridView -PassThru -Title "Choose the Internet VSwitch for the Lab" | Select-Object Name
-$InternetVSwitch = $InternetVSwitch1.Name
+#if ((Get-VMSwitch | Where-Object -Property name -EQ -Value $virtualSwitchName) -eq $null) {
+#    New-VMSwitch -Name $virtualSwitchName -SwitchType Private
+#}
+#Write-Log 'Host' 'Select the Internet VSwitch for the Lab -- It will be added to the RRAS Router'
+#$InternetVSwitch1 = Get-VMSwitch | Where-Object Switchtype -ne Private | Select-Object Name, SwitchType | Out-GridView -PassThru -Title "Choose the Internet VSwitch for the Lab" | Select-Object Name
+#$InternetVSwitch = $InternetVSwitch1.Name
 
 #region - 009 Building LAB VMs....
 
-Invoke-FabricVMPrep 'aa_FABDC01' 'FABDC01' -FullServer2019
-Invoke-FabricVmPrep 'aa_FABDC02' 'FABDC02' -FullServer2019
-Invoke-FabricVmPrep 'aa_FABDHCP01' 'FABDHCP01'-FullServer2019
-Invoke-FabricVmPrep 'aa_FABMGMT01' 'FABMGMT01' -FullServer2019
-Invoke-FabricVmPrep 'aa_FABRouter01' 'FABRouter01' -FullServer2019
-Invoke-FabricVmPrep 'aa_FABWSUS01' 'FABWSUS01' -FullServer2019
+Invoke-FabricVMPrep 'FABDC01' 'FABDC01' -FullServer2019
+Invoke-FabricVmPrep 'FABDC02' 'FABDC02' -FullServer2019
+#Invoke-FabricVmPrep 'FABDHCP01' 'FABDHCP01'-FullServer2019
+Invoke-FabricVmPrep 'FABMGMT01' 'FABMGMT01' -FullServer2019
+#Invoke-FabricVmPrep 'FABRouter01' 'FABRouter01' -FullServer2019
+Invoke-FabricVmPrep 'FABWSUS01' 'FABWSUS01' -FullServer2019
 #Invoke-FabricVmPrep 'DRTitan01' 'DRTitan01' -FullServer2019
 #Invoke-DemoVMPrep 'VMM01' 'VMM01' -FullServer2019
 #Invoke-DemoVMPrep 'SCOM01' 'SCOM01' -FullServer2019
@@ -2149,7 +2149,7 @@ Invoke-FabricVmPrep 'aa_FABWSUS01' 'FABWSUS01' -FullServer2019
 
 #region - 010 Building DC01
 Write-Output -InputObject "Building The Fabric"
-$VMName = 'aa_FABDC01'
+$VMName = 'FABDC01'
 $GuestOSName = 'FABDC01'
 $IPNumber = '1'
 
@@ -2158,7 +2158,7 @@ Create-FabricVM $VMName $GuestOSName $IPNumber
 Invoke-Command -VMName $VMName -Credential $localCred {
     param($VMName, $domainName, $domainAdminPassword)
 
-    $newroute = '172.16.100.254'
+    $newroute = '172.16.16.15'
     Write-Output -InputObject "[$($VMName)]:: Configuring Default Gateway"
     $null = Get-Netroute | Where DestinationPrefix -eq "0.0.0.0/0" | Remove-NetRoute -Confirm:$False
     $null = Test-NetConnection localhost
@@ -2191,114 +2191,11 @@ Configure-ADCS -VMName $VMName
 
 #endregion
 
-#region - 011 Building DHCP01...
-
-$VMName = 'aa_FABDHCP01'
-$GuestOSName = 'FABDHCP01'
-$IPNumber = '3'
-
-Create-FabricVM $VMName $GuestOSName $IPNumber
-
-Invoke-Command -VMName $VMName -Credential $localCred {
-    param($VMName, $domainCred, $domainName)
-
-    $newroute = '172.16.100.254'
-    Write-Output -InputObject "[$($VMName)]:: Configuring Default Gateway"
-    $null = Get-Netroute | Where DestinationPrefix -eq "0.0.0.0/0" | Remove-NetRoute -Confirm:$False
-    $null = Test-NetConnection localhost
-    new-netroute -InterfaceAlias "Ethernet" -NextHop $newroute  -DestinationPrefix '0.0.0.0/0' -verbose
-    
-    Write-Output -InputObject "[$($VMName)]:: Installing DHCP"
-    $null = Install-WindowsFeature DHCP -IncludeManagementTools
-    Write-Output -InputObject "[$($VMName)]:: Joining domain as `"$($env:computername)`""
-    while (!(Test-Connection -ComputerName $domainName -BufferSize 16 -Count 1 -Quiet -ea SilentlyContinue)) {
-        Start-Sleep -Seconds 1
-    }
-    do {
-        Add-Computer -DomainName $domainName -Credential $domainCred -ea SilentlyContinue
-    }
-    until ($?)
-} -ArgumentList $VMName, $domainCred, $domainName
-
-Restart-DemoVM $VMName
-Wait-PSDirect $VMName -cred $domainCred
-
-Invoke-Command -VMName $VMName -Credential $domainCred {
-    param($VMName, $domainName, $Subnet, $IPNumber)
-
-    Write-Output -InputObject "[$($VMName)]:: Waiting for name resolution"
-
-    while ((Test-NetConnection -ComputerName $domainName).PingSucceeded -eq $false) {
-        Start-Sleep -Seconds 1
-    }
-
-    Write-Output -InputObject "[$($VMName)]:: Configuring DHCP Server"    
-    Set-DhcpServerv4Binding -BindingState $true -InterfaceAlias Ethernet
-    Add-DhcpServerv4Scope -Name 'IPv4 Network' -StartRange "$($Subnet)10" -EndRange "$($Subnet)200" -SubnetMask 255.255.255.0
-    Set-DhcpServerv4OptionValue -OptionId 6 -value "$($Subnet)1"
-    Set-DhcpServerv4OptionValue -OptionId 3 -value "$($Subnet)254"
-    Add-DhcpServerInDC -DnsName "$($env:computername).$($domainName)"
-    foreach ($i in 1..99) {
-        $mac = '00-b5-5d-fe-f6-' + ($i % 100).ToString('00')
-        $ip = $Subnet + '1' + ($i % 100).ToString('00')
-        $desc = 'Container ' + $i.ToString()
-        $scopeID = $Subnet + '0'
-        Add-DhcpServerv4Reservation -IPAddress $ip -ClientId $mac -Description $desc -ScopeId $scopeID
-    }
-} -ArgumentList $VMName, $domainName, $Subnet, $IPNumber
-
-Stop-VM -VMName $VMName
-Set-VMMemory -VMName $VMName -StartupBytes 2GB
-Set-VMProcessor -VMName $VMName -Count 2
-Start-VM -VMName $VMName
-Wait-PSDirect -VMName $VMName -cred $domainCred
-
-#endregion
-
-
-#region - 014 Building the Router for the Lab ...
-
-$VMName = 'aa_FABRouter01'
-$GuestOSName = 'FABRouter01'
-$IPNumber = '254'
-
-Create-FabricVM $VMName $GuestOSName $IPNumber
-
-Invoke-Command -VMName $VMName -Credential $localCred {
-    param($VMName, $domainCred, $domainName)
-    Write-Output -InputObject "[$($VMName)]:: Joining domain as `"$($env:computername)`""
-    while (!(Test-Connection -ComputerName $domainName -BufferSize 16 -Count 1 -Quiet -ea SilentlyContinue)) {
-        Start-Sleep -Seconds 1
-    }
-    do {
-        Add-Computer -DomainName $domainName -Credential $domainCred -ea SilentlyContinue
-    }
-    until ($?)
-} -ArgumentList $VMName, $domainCred, $domainName
-
-Install-RRAS -VMName $VMName
-write-Output -InputObject "[$($VMName)]:: Adjusting RAM and Processors"
-Stop-VM -VMName $VMName
-Set-VMMemory -VMName $VMName -StartupBytes 2GB
-Set-VMProcessor -VMName $VMName -Count 2
-Start-VM -VMName $VMName
-Wait-PSDirect -VMName $VMName -cred $domainCred
-write-Output -InputObject "[$($VMName)]:: Creating NAT Rules for Windows Admin center Remote Access and RDP from the Internet"
-
-<#>NEW --> Add your Custom NAT Rules for the Lab Here
-Invoke-Command -VMName $VMName -Credential $domainCred {
-    $ExternalInterface = "Internet"
-    $null = cmd.exe /c "netsh routing ip nat add portmapping name=$ExternalInterface tcp 0.0.0.0 6516 172.16.100.4 6516"
-    $null = cmd.exe /c "netsh routing ip nat add portmapping name=$ExternalInterface tcp 0.0.0.0 3389 172.16.100.4 3389"
-
-}
-</#>
-#endregion
 
 #region - 015 Building Management Server - With Veeam / Windows Admin Center
 #NEW --> I've hard coded Management01 as .4 so the NAT Rules work
 
-$VMName = 'aa_FABMGMT01'
+$VMName = 'FABMGMT01'
 $GuestOSName = 'FABMGMT01'
 $IPNumber = '4'
 
@@ -2307,7 +2204,7 @@ Create-FabricVM $VMName $GuestOSName $IPNumber
 Invoke-Command -VMName $VMName -Credential $localCred {
     param($VMName, $domainCred, $domainName)
 
-    $newroute = '172.16.100.254'
+    $newroute = '172.16.16.15'
     Write-Output -InputObject "[$($VMName)]:: Configuring Default Gateway"
     $null = Get-Netroute | Where-Object DestinationPrefix -eq "0.0.0.0/0" | Remove-NetRoute -Confirm:$False
     $null = Test-NetConnection localhost
@@ -2338,10 +2235,11 @@ Invoke-Command -VMName $VMName -Credential $domainCred {
 #Copy-LabFiles -VMName $VMName -GuestOSName $GuestOSName -VMPath $VMPath -WorkingDir $WorkingDir -BashVHDPath $BaseVHDPath
 #Install-StorageSpacesPool -VMName $VMName -GuestOSName $GuestOSName
 Install-Veeam -VMName $VMName -GuestOSName $GuestOSName -VMPath $VMPath
+#Install-WSUS -VMName $VMName 
 Install-WindowsAdminCenter -VMName $VMName -GuestOSName $GuestOSName
 #endregion
 
-$VMName = 'aa_FABWSUS01'
+$VMName = 'FABWSUS01'
 $GuestOSName = 'FABWSUS01'
 $IPNumber = '5'
 
@@ -2350,7 +2248,7 @@ Create-FabricVM $VMName $GuestOSName $IPNumber
 Invoke-Command -VMName $VMName -Credential $localCred {
     param($VMName, $domainCred, $domainName)
 
-    $newroute = '172.16.100.254'
+    $newroute = '172.16.16.15'
     Write-Output -InputObject "[$($VMName)]:: Configuring Default Gateway"
     $null = Get-Netroute | Where-Object DestinationPrefix -eq "0.0.0.0/0" | Remove-NetRoute -Confirm:$False
     $null = Test-NetConnection localhost
@@ -2388,13 +2286,22 @@ Install-WSUS -VMName $VMName -GuestOSName $GuestOSName
 #region - 019 - Adding 2nd Domain Controller 
 
 
-$VMName = 'aa_FABDC02'
+$VMName = 'FABDC02'
 $GuestOSName = 'FABDC02'
 $IPNumber = '2'
 
+  
 Create-FabricVM $VMName $GuestOSName $IPNumber
 Invoke-Command -VMName $VMName -Credential $localCred {
     param($VMName, $domainCred, $domainName)
+
+    $newroute = '172.16.16.15'
+    Write-Output -InputObject "[$($VMName)]:: Configuring Default Gateway"
+    $null = Get-Netroute | Where-Object DestinationPrefix -eq "0.0.0.0/0" | Remove-NetRoute -Confirm:$False
+    $null = Test-NetConnection localhost
+    new-netroute -InterfaceAlias "Ethernet" -NextHop $newroute  -DestinationPrefix '0.0.0.0/0' -verbose
+
+
     Write-Output -InputObject "[$($VMName)]:: Installing AD"
     $null = Install-WindowsFeature AD-Domain-Services -IncludeManagementTools
     Write-Output -InputObject "[$($VMName)]:: Joining domain as `"$($env:computername)`""
