@@ -1,6 +1,6 @@
 ﻿<#
 # Installs SQL Server 2017, 2018/4/5 Niall Brady, https://www.windows-noob.com
-# Updated for SQL Server 2019 by Dave Kawula MVP - https://www.checkyourlogs.net
+# Updated for SQL Server 2019 2020/01/25 by Dave Kawula MVP - https://www.checkyourlogs.net
 #
 # This script:            Installs SQL Server 2019, CU5, SSMS and RS
 # # Usage:                  Run this script on the Server as a user with local Administrative permissions on the server
@@ -30,7 +30,7 @@ Function Install-SQL2019 {
     Break
 }
     #Adding SQL Drives to the Virtual Machine
-    
+   
     New-VHD -Path "$($VMPath)\$($GuestOSName) - SQL Install 1.vhdx" -Dynamic -SizeBytes 60GB 
     Mount-VHD -Path "$($VMPath)\$($GuestOSName) - SQL Install 1.vhdx"
     $DiskNumber = (Get-Diskimage -ImagePath "$($VMPath)\$($GuestOSName) - SQL Install 1.vhdx").Number
@@ -78,7 +78,7 @@ Invoke-Command -VMName $VMName -Credential $domainCred {
     $Driveletter = get-wmiobject -class "Win32_Volume" -namespace "root\cimv2" | where-object { $_.Label -like "SQLLogs*" }
     $SQLDataDrive = $Driveletter.DriveLetter 
 
-    $iso = Get-ChildItem -Path "$($SQLInstall)\SQL2019.iso"  #CHANGE THIS!
+    $iso = Get-ChildItem -Path "$($SQLInstallDrive)\SQL2019.iso"  #CHANGE THIS!
 
     Mount-DiskImage $iso.FullName
     $setup = $(Get-DiskImage -ImagePath $iso.FullName | Get-Volume).DriveLetter + ':' 
@@ -311,3 +311,11 @@ write-host "Exiting script, goodbye."
 
 }
 }
+
+
+#Installing SQL from the Function
+
+$DomainCred = Get-Credential
+
+Install-SQL2019 -VMName HACA1-SQLSVR-A -GuestOSName HACA1-SQLSVR-A -VMPath E:\SH.COM\VMs -WorkingDir e:\sh.com
+Install-SQL2019 -VMName HACA1-SQLSVR-B -GuestOSName HACA1-SQLSVR-B -VMPath E:\SH.COM\VMs -WorkingDir e:\sh.com
