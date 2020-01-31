@@ -29,63 +29,16 @@ Function Install-SQL2019 {
     Write-Warning “You do not have Administrator rights to run this script!`nPlease re-run this script as an Administrator!”
     Break
 }
-    #Adding SQL Drives to the Virtual Machine
-   
-    New-VHD -Path "$($VMPath)\$($GuestOSName) - SQL Install 1.vhdx" -Dynamic -SizeBytes 60GB 
-    Mount-VHD -Path "$($VMPath)\$($GuestOSName) - SQL Install 1.vhdx"
-    $DiskNumber = (Get-Diskimage -ImagePath "$($VMPath)\$($GuestOSName) - SQL Install 1.vhdx").Number
-    Initialize-Disk -Number $DiskNumber -PartitionStyle GPT 
-    Get-Disk -Number $DiskNumber | New-Partition -UseMaximumSize -AssignDriveLetter | Format-Volume -FileSystem NTFS -NewFileSystemLabel "SQLInstall" -Confirm:$False
-    $Driveletter = get-wmiobject -class "Win32_Volume" -namespace "root\cimv2" | where-object { $_.Label -like "SQLInstall*" }
-    $SQLInstall = $DriveLetter.DriveLetter
-    Copy-Item -Path "$($WorkingDir)\SQL2019.iso" -Destination "$($SQLInstall)\SQL2019.iso" -Force
-    Dismount-VHD -Path "$($VMPath)\$($GuestOSName) - SQL Install 1.vhdx"
-    Add-VMHardDiskDrive -VMName $VMName -Path "$($VMPath)\$($GuestOSName) - SQL Install 1.vhdx" -ControllerType SCSI
-
-
-    New-VHD -Path "$($VMPath)\$($GuestOSName) - SQL Data 1.vhdx" -Dynamic -SizeBytes 200GB 
-    Mount-VHD -Path "$($VMPath)\$($GuestOSName) - SQL Data 1.vhdx"
-    $DiskNumber = (Get-Diskimage -ImagePath "$($VMPath)\$($GuestOSName) - SQL Data 1.vhdx").Number
-    Initialize-Disk -Number $DiskNumber -PartitionStyle GPT 
-    Get-Disk -Number $DiskNumber | New-Partition -UseMaximumSize -AssignDriveLetter | Format-Volume -FileSystem NTFS -NewFileSystemLabel "SQLData" -Confirm:$False
-    Dismount-VHD -Path "$($VMPath)\$($GuestOSName) - SQL Data 1.vhdx"
-    Add-VMHardDiskDrive -VMName $VMName -Path "$($VMPath)\$($GuestOSName) - SQL Data 1.vhdx" -ControllerType SCSI
-  
-    New-VHD -Path "$($VMPath)\$($GuestOSName) - SQL Logs 1.vhdx" -Dynamic -SizeBytes 100GB 
-    Mount-VHD -Path "$($VMPath)\$($GuestOSName) - SQL Logs 1.vhdx"
-    $DiskNumber = (Get-Diskimage -ImagePath "$($VMPath)\$($GuestOSName) - SQL Logs 1.vhdx").Number
-    Initialize-Disk -Number $DiskNumber -PartitionStyle GPT 
-    Get-Disk -Number $DiskNumber | New-Partition -UseMaximumSize -AssignDriveLetter | Format-Volume -FileSystem NTFS -NewFileSystemLabel "SQLLogs" -Confirm:$False
-    Dismount-VHD -Path "$($VMPath)\$($GuestOSName) - SQL Logs 1.vhdx"
-    Add-VMHardDiskDrive -VMName $VMName -Path "$($VMPath)\$($GuestOSName) - SQL Logs 1.vhdx" -ControllerType SCSI
-
-
-
-Invoke-Command -VMName $VMName -Credential $domainCred {
-
-    Get-Disk | Where-Object OperationalStatus -EQ "Offline" | Set-Disk -IsOffline $False 
-    Get-Disk | Where-Object Number -NE "0" | Set-Disk -IsReadOnly $False
-    $Driveletter = get-wmiobject -class "Win32_Volume" -namespace "root\cimv2" | where-object { $_.Label -like "SQLInstall*" }
-    $SQLInstallDrive = $Driveletter.DriveLetter  
     
-    Get-Disk | Where-Object OperationalStatus -EQ "Offline" | Set-Disk -IsOffline $False 
-    Get-Disk | Where-Object Number -NE "0" | Set-Disk -IsReadOnly $False
-    $Driveletter = get-wmiobject -class "Win32_Volume" -namespace "root\cimv2" | where-object { $_.Label -like "SQLData*" }
-    $SQLDataDrive = $Driveletter.DriveLetter 
-    
-    Get-Disk | Where-Object OperationalStatus -EQ "Offline" | Set-Disk -IsOffline $False 
-    Get-Disk | Where-Object Number -NE "0" | Set-Disk -IsReadOnly $False
-    $Driveletter = get-wmiobject -class "Win32_Volume" -namespace "root\cimv2" | where-object { $_.Label -like "SQLLogs*" }
-    $SQLDataDrive = $Driveletter.DriveLetter 
-
-    $iso = Get-ChildItem -Path "$($SQLInstallDrive)\SQL2019.iso"  #CHANGE THIS!
+    $iso = Get-ChildItem -Path "d:\SQL2019.iso"  #CHANGE THIS!
 
     Mount-DiskImage $iso.FullName
     $setup = $(Get-DiskImage -ImagePath $iso.FullName | Get-Volume).DriveLetter + ':' 
     $setup
+    $SQLInstallDrive = 'd:'
 
 $folderpath="C:\Scripts"
-$inifile="$folderpath\ConfigurationFile.ini"
+$inifile="$folderpath\ConfigurationFile2.ini"
 # next line sets user as a SQL sysadmin
 $yourusername="sh.com\administrator"
 # path to the SQL media
@@ -259,45 +212,6 @@ $Prms = $Parms.Split(" ")
 & "$filepath" $Prms | Out-Null
 Write-Host "done!" -ForegroundColor Green
 
-# start the SQL SSMS downloader
-$filepath="$folderpath\SSMS-Setup-ENU.exe"
-if (!(Test-Path $filepath)){
-write-host "Downloading SQL Server 2017 SSMS..." -nonewline
-$URL = "https://go.microsoft.com/fwlink/?linkid=870039"
-$clnt = New-Object System.Net.WebClient
-$clnt.DownloadFile($url,$filepath)
-Write-Host "done!" -ForegroundColor Green
-}
- else {
-write-host "found the SQL SSMS Installer, no need to download it..."
-}
-# start the SQL SSMS installer
-write-host "about to install SQL Server 2017 SSMS..." -nonewline
-$Parms = " /Install /Quiet /Norestart /Logs SQLServerSSMSlog.txt"
-$Prms = $Parms.Split(" ")
-& "$filepath" $Prms | Out-Null
-Write-Host "done!" -ForegroundColor Green
-
-
-# start the SQL RS downloader
-$filepath="$folderpath\SQLServerReportingServices.exe"
-if (!(Test-Path $filepath)){
-write-host "Downloading SQL Server 2019 Reporting Services..." -nonewline
-$URL = "https://download.microsoft.com/download/1/a/a/1aaa9177-3578-4931-b8f3-373b24f63342/SQLServerReportingServices.exe"
-$clnt = New-Object System.Net.WebClient
-$clnt.DownloadFile($url,$filepath)
-Write-Host "done!" -ForegroundColor Green
-}
- else {
-write-host "found the SQL RS Installer, no need to download it..."
-}
-# start the SQL RS installer
-write-host "about to install SQL Server 2019 Reporting Services..." -nonewline
-$Parms = "  /IAcceptLicenseTerms True /Quiet /Norestart /Log SQLServerReportingServiceslog.txt"
-$Prms = $Parms.Split(" ")
-& "$filepath" $Prms | Out-Null
-Write-Host "done!" -ForegroundColor Green
-
 # Configure SQL memory (thanks Skatterbrainz)
 write-host "Configuring SQL memory..." -nonewline
 
@@ -314,12 +228,15 @@ write-host ""
 write-host "Exiting script, goodbye."
 
 }
-}
+
 
 
 #Installing SQL from the Function
 
-$DomainCred = Get-Credential
+#$DomainCred = Get-Credential
 
-Install-SQL2019 -VMName HACA1-SQLSVR-A -GuestOSName HACA1-SQLSVR-A -VMPath E:\SH.COM\VMs -WorkingDir e:\sh.com
-Install-SQL2019 -VMName HACA1-SQLSVR-B -GuestOSName HACA1-SQLSVR-B -VMPath E:\SH.COM\VMs -WorkingDir e:\sh.com
+#Install-SQL2019 -VMName HACA1-SQLSVR-A -GuestOSName HACA1-SQLSVR-A -VMPath E:\SH.COM\VMs -WorkingDir e:\sh.com
+#Install-SQL2019 -VMName HACA1-SQLSVR-B -GuestOSName HACA1-SQLSVR-B -VMPath E:\SH.COM\VMs -WorkingDir e:\sh.com
+
+#Local Install Not PowerShell Direct
+Install-SQL2019
