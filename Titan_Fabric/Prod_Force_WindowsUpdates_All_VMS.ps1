@@ -24,8 +24,24 @@ Install-VMWUUpdatesPSDirect -InstallUpdates Yes -RebootNow Yes
 #Get-ExecutionPolicy
 }
 
-
 Wait-PSDirect -VMName $Node -cred $cred
+Restart-DemoVM -VMName $Node
+
+}
+Catch {
+
+"Error Contacting Server: $Node"
+
+
+}
+
+
+} #Update Pass 1
+
+
+Foreach ($Node in $Nodes) {
+
+TRY{
 Restart-DemoVM -VMName $Node
 Wait-PSDirect -VMName $Node -cred $cred
 
@@ -39,8 +55,22 @@ Install-VMWUUpdatesPSDirect -InstallUpdates Yes -RebootNow Yes
 #Set-ExecutionPolicy RemoteSigned
 #Get-ExecutionPolicy
 }
+}
 
-Wait-PSDirect -VMName $Node -cred $cred
+Catch {
+
+"Error Contacting Server: $Node"
+
+
+}
+
+
+} #Update Pass 2
+
+
+Foreach ($Node in $Nodes) {
+
+TRY{
 Restart-DemoVM -VMName $Node
 Wait-PSDirect -VMName $Node -cred $cred
 
@@ -54,8 +84,21 @@ Install-VMWUUpdatesPSDirect -InstallUpdates Yes -RebootNow Yes
 #Set-ExecutionPolicy RemoteSigned
 #Get-ExecutionPolicy
 }
+}
 
-Wait-PSDirect -VMName $Node -cred $cred
+Catch {
+
+"Error Contacting Server: $Node"
+
+
+}
+
+
+} #Update Pass 3
+
+Foreach ($Node in $Nodes) {
+
+TRY{
 Restart-DemoVM -VMName $Node
 Wait-PSDirect -VMName $Node -cred $cred
 
@@ -67,13 +110,10 @@ Write-Host ($Node) "Working on Update Pass 4"
 import-module \\HACA1-DC01\scripts$\Install-VMWUUpdates.ps1 -force -WarningAction Continue
 Install-VMWUUpdatesPSDirect -InstallUpdates Yes -RebootNow Yes
 Set-ExecutionPolicy RemoteSigned
-Get-ExecutionPolicy}
-
-
-Wait-PSDirect -VMName $Node -cred $cred
-Restart-DemoVM -VMName $Node
-Wait-PSDirect -VMName $Node -cred $cred
+Get-ExecutionPolicy
 }
+}
+
 Catch {
 
 "Error Contacting Server: $Node"
@@ -82,6 +122,5 @@ Catch {
 }
 
 
-} #Run Update Pass 4 Times on $Nodes Array
-
+} #Update Pass 4
 
