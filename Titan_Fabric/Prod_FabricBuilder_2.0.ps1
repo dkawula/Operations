@@ -2519,6 +2519,58 @@ Function Configure-ADCS {
             $VeeamISO = $openfile.FileName
             $veeamISO
             }
+
+Function Download-SecurityBaselines {
+    param
+    (
+        [string]$VMName, 
+        [string]$GuestOSName,
+        [string]$VMPath,
+        [string]$WorkingDir,
+        [string]$Domainname
+    )
+
+
+    #Download Windows Admin Center to c:\post-install
+
+
+    Invoke-Command -VMName $VMName -Credential $domainCred {
+
+        New-Item -ItemType Directory -Path "c:\Post-Install" -Force:$true | Out-Null
+        Write-Output "Microsoft Security Compliance Toolkit"
+        #Ping the internet to get things working in the lab
+        ping www.google.com
+
+        Write-Output "Download Security Compliance Toolkit Server 2019 - 1909"     
+        $sourceURI = "https://download.microsoft.com/download/8/5/C/85C25433-A1B0-4FFA-9429-7E023E7DA8D8/Windows%2010%20Version%201909%20and%20Windows%20Server%20Version%201909%20Security%20Baseline.zip"
+        $Destinationfilename = "c:\post-install\SecurityBaselineServer2019-1909.zip"
+        invoke-webrequest -UseBasicParsing -Uri "$sourceURI" -outfile "$destinationfilename" -passthru | select -Expand headers -verbose
+
+
+        Write-Output "Expanding Zip File"
+        Expand-Archive -LiteralPath "$Destinationfilename" -DestinationPath 'c:\post-install\MSSECCOMP-2019-1909'
+
+
+        Write-Output "Download Security Compliance Toolkit Baseline Windows 10 2004 and Server 2004"     
+        $sourceURI = "https://download.microsoft.com/download/8/5/C/85C25433-A1B0-4FFA-9429-7E023E7DA8D8/Windows%2010%20Version%202004%20and%20Windows%20Server%20Version%202004%20Security%20Baseline.zip"
+        $Destinationfilename = "c:\post-install\SecurityBaselineServer2004.zip"
+        invoke-webrequest -UseBasicParsing -Uri "$sourceURI" -outfile "$destinationfilename" -passthru | select -Expand headers -verbose
+
+
+        Write-Output "Expanding Zip File"
+        Expand-Archive -LiteralPath "$Destinationfilename" -DestinationPath 'c:\post-install\MSSECCOMP-2004'
+
+
+       
+        Write-Output "Creating Group Policy Central Store"
+        New-Item -ItemType Directory -Path "C:\Windows\SYSVOL\sysvol\$($Domainname)\Policies\PolicyDefinitions" -Force:$true | Out-Null
+        
+
+               
+    }
+
+
+}
 #endregion
 
 #region Variable Init
@@ -2623,7 +2675,10 @@ Invoke-Command -VMName $VMName -Credential $domainCred {
 
 Restart-DemoVM $VMName 
 Wait-PSDirect $VMName -cred $domainCred
+Write-Output -InputObject "[$($VMName)]:: Adding AD Users"
 Create-ADusers -VMName $VMName
+Write-Output -InputObject "[$($VMName)]:: Downloading Security Baselines"
+Download-SecurityBaselines -VMName $VMname -Domainname $DomainName
 Configure-ADCS -VMName $VMName
 
 #endregion
