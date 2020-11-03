@@ -370,52 +370,7 @@ function Invoke-NodeStorageBuild {
     Start-VM $VMName
     Wait-PSDirect $VMName -cred $localCred
 
-
-    Invoke-Command -VMName $VMName -Credential $localCred {
-        param($VMName, $domainCred, $domainName)
-        Write-Output -InputObject "[$($VMName)]:: Installing Clustering"
-        $null = Install-WindowsFeature -Name File-Services, Failover-Clustering, Hyper-V, FS-Data-Deduplication -IncludeManagementTools
-        Write-Output -InputObject "[$($VMName)]:: Joining domain as `"$($env:computername)`""
     
-        while (!(Test-Connection -ComputerName $domainName -BufferSize 16 -Count 1 -Quiet -ea SilentlyContinue)) {
-            Start-Sleep -Seconds 1
-        }
-    
-        do {
-            Add-Computer -DomainName $domainName -Credential $domainCred -ea SilentlyContinue
-        }
-        until ($?)
-    } -ArgumentList $VMName, $domainCred, $domainName
-
-    Wait-PSDirect $VMName -cred $domainCred
-    Restart-DemoVM $VMName
-    Wait-PSDirect $VMName -cred $domainCred
-
-    Invoke-Command -VMName $VMName -Credential $domainCred {
-        Rename-NetAdapter -Name 'Ethernet' -NewName 'LOM-P0'
-        Rename-NetAdapter -Name 'Ethernet 2' -NewName 'LOM-P1'
-        Rename-NetAdapter -Name 'Ethernet 3' -NewName 'Riser-P0'
-        Get-NetAdapter -Name 'Ethernet 5' | Rename-NetAdapter -NewName 'Riser-P1'
-   
-        New-VmSwitch -Name VSW01 -NetAdapterName "LOM-P0", "LOM-P1" -EnableEmbeddedTeaming $True -AllowManagementOS $False -verbose
-        Add-VMNetworkAdapter -SwitchName VSW01 -Name SMB_1 -ManagementOS
-        Add-VMNetworkAdapter -SwitchName VSW01 -Name SMB_2 -ManagementOS
-        Add-VMNetworkAdapter -SwitchName VSW01 -Name LM -ManagementOS
-        Add-VMNetworkAdapter -SwitchName VSW01 -Name HB -ManagementOS
-        Add-VMNetworkAdapter -SwitchName VSW01 -Name MGMT -ManagementOS
-
-   
-        # Adding the hidden Registry Key to make S2D Work in Windows Server 2019
-        # https://social.technet.microsoft.com/Forums/en-US/7e7cfd1e-b9e2-410c-b6ab-26f5f564a50e/registry-key-to-enable-s2d-on-windows-server-2019?forum=ws2016&prof=required
-        $Key = "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\ClusSvc\Parameters"
-        If ( -Not ( Test-Path "Registry::$Key")) { New-Item -Path "Registry::$Key" -ItemType RegistryKey -Force }
-        Set-ItemProperty -path "Registry::$Key" -Name "S2D" -Type "Dword" -Value "1"
-
-    }
-
-    Restart-DemoVM $VMName
-    #Wait-PSDirect $VMName -cred $domainCred
-
   
 }
 
