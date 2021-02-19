@@ -20,11 +20,9 @@ Connect-MSGraph
  
 #### Gets all devices running Windows
 $Devices1 = Get-IntuneManagedDevice -Filter "contains(operatingsystem,'Windows')"
-$Devices = $Devices | where DeviceName -eq DKSURFACE02 
+$Devices = $Devices1 | where DeviceName -eq DKSURFACE02 
 
 
-
-<#>
 Foreach ($Device in $Devices)
 {
 
@@ -34,9 +32,5 @@ Write-Host "Fresh Start Request Sent to Device with DeviceID $($Device.managedDe
 }
 ####################################################
 
-</#>
 
-<#>
-get-command -Module microsoft.graph.intune | select name | where name -like *invoke*
 
-</#>
