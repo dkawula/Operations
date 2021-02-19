@@ -6,3 +6,4 @@ Import-PSSession $Session
 Get-MoveRequest | where {$_.status -notlike “complete*”} | Get-MoveRequestStatistics | Select DisplayName,status,percentcomplete,itemstransferred
 
 Get-MoveRequest 
+Get-MigrationUserStatistics

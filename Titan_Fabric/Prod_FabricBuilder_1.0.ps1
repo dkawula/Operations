@@ -2338,7 +2338,7 @@ Invoke-Command -VMName $VMName -Credential $domainCred {
 #Copy-LabFiles -VMName $VMName -GuestOSName $GuestOSName -VMPath $VMPath -WorkingDir $WorkingDir -BashVHDPath $BaseVHDPath
 #Install-StorageSpacesPool -VMName $VMName -GuestOSName $GuestOSName
 Install-Veeam -VMName $VMName -GuestOSName $GuestOSName -VMPath $VMPath
-Install-WindowsAdminCenter -VMName $VMName -GuestOSName $GuestOSName
+#Install-WindowsAdminCenter -VMName $VMName -GuestOSName $GuestOSName
 #endregion
 
 $VMName = 'aa_FABWSUS01'
