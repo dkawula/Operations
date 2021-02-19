@@ -19,8 +19,8 @@ Connect-MSGraph
 #### Insert your script here
  
 #### Gets all devices running Windows
-$Devices1 = Get-IntuneManagedDevice -Filter "contains(operatingsystem,'Windows')"
-$Devices = $Devices1 | where DeviceName -eq DKSURFACE02 
+$Devices = Get-IntuneManagedDevice -Filter "contains(operatingsystem,'Windows')"
+#$Devices = $Devices1 | where DeviceName -eq DKSURFACE02 
  
 Foreach ($Device in $Devices)
 {
