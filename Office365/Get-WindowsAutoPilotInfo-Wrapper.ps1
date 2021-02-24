@@ -1,4 +1,6 @@
-﻿$IntuneModule = Get-Module -Name "Microsoft.Graph.Intune" -ListAvailable
+﻿#Workaround for get-windowsautopilotinfo not working
+
+$IntuneModule = Get-Module -Name "Microsoft.Graph.Intune" -ListAvailable
 if (!$IntuneModule){
  
 write-host "Microsoft.Graph.Intune Powershell module not installed..." -f Red
@@ -20,13 +22,8 @@ Connect-MSGraph
  
 #### Gets all devices running Windows
 $Devices = Get-IntuneManagedDevice -Filter "contains(operatingsystem,'Windows')"
-$Devices1 = $Devices | where DeviceName -eq DKSURFACEBOOK02 
+#$Devices = $Devices1 | where DeviceName -eq DKSURFACE02 
  
-Foreach ($Device in $Devices1)
-{
- 
-Invoke-IntuneManagedDeviceSyncDevice -managedDeviceId $Device.managedDeviceId
-Write-Host "Sending Sync request to Device with DeviceID $($Device.managedDeviceId)" -ForegroundColor Yellow
- 
-}
- 
+#Now that we are connected to the Graph API we shouldn't need to connect again.
+Install-Script Get-Windowsautopilotinfo
+Get-WindowsAutoppilotinfo -online
