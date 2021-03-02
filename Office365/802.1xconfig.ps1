@@ -19,10 +19,16 @@ param
     
 ) 
 
+$ErrorActionPreference = 'Stop'
 
-If ($Install)
+If ($Install) {
 
-{
+try
+ {
+
+
+
+
 #Windows 10 Post Configuration Script
 #Turn on 802.1x Authentication Tab on the Network Adapter Properties
 #Deploy the Root Certificates first using Intune
@@ -64,7 +70,11 @@ netsh lan reconnect interface=*
 
 #Now we need a simple detection Method for the App It will just check to see if this file is here.
 
-New-Item c:\temp\802.1x.installed.log -ItemType file -Force | out-null 
+New-Item -Path "HKLM:\Software" -Name "Intune Detection"
+
+New-Item -Path "HKLM:\Software\Intune Detection" -Name "8021x"
+
+New-ItemProperty -Path "HKLM:\Software\Intune Detection\8021x" -Name "AppPresent" -Value "True" -PropertyType "String"
 
 <#>
 #Working
@@ -92,9 +102,24 @@ $LanProfileSource.Save("c:\temp\ethernet.xml")
 
 </#>
 
+[System.Environment]::Exit(0)
 }
 
-If ($uninstall)
+
+Catch
+{
+Write-Host "Error Installing" | Out-Null
+[System.Environment]::Exit(1)
+}
+}
+
+
+If ($uninstall) {
+
+try
+{
+
+
 
 {
 #If uninstall we should just need to Stopp the Service and return to a Manual Startup Type
@@ -109,10 +134,18 @@ Get-Service -Name dot3svc | Stop-Service -Force
 #Reconnect the Interfaces
 netsh lan reconnect interface=*
 
+# Remove the Detection for the App on Uninstall
+Get-Item -Path "HKLM:\Software\Intune Detection" -Name "8021x"| Remove-Item -Force
+
+
+
+}
+[System.Environment]::Exit(0)
 }
 
-else
-
-{
-Write-Host "No Options Selected"| Out-null
+Catch {
 }
+Write-Host "Error UnInstalling" | Out-Null
+[System.Environment]::Exit(1)
+}
+
