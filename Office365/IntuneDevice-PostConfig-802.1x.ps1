@@ -1,15 +1,28 @@
 ﻿#Setting some parameters to make this work for intune.
-#Create an Install.cmd with - powershell.exe -executionpolicy bypass -command "& '.\802.1xconfig.ps1' 1"
-#Create an Uninstall.cmd with - powershell.exe -executionpolicy bypass -command "& '.\802.1xconfig.ps1' 0"
+#Create an Install.cmd with - powershell.exe -executionpolicy bypass -command "& '.\802.1xconfig.ps1' -install"
+#Create an Uninstall.cmd with - powershell.exe -executionpolicy bypass -command "& '.\802.1xconfig.ps1' -uninstall"
 #Put this script in the same working folder
 #Package it with the https://github.com/Microsoft/Microsoft-Win32-Content-Prep-Tool
 
-Param
-(
-[Parameter(Mandatory=$true,Position=0)]
-[String]$Value
-)
+#Adding some logic for the install and uninstall switches
 
+#region Parameters
+[cmdletbinding()]
+param
+( 
+
+ [Parameter(Mandatory=$false)] 
+    [SWITCH]$install,
+
+    [Parameter(Mandatory=$false)] 
+    [SWITCH]$uninstall
+    
+) 
+
+
+If ($Install)
+
+{
 #Windows 10 Post Configuration Script
 #Turn on 802.1x Authentication Tab on the Network Adapter Properties
 #Deploy the Root Certificates first using Intune
@@ -78,3 +91,28 @@ $LanProfileSource = [xml]@"
 $LanProfileSource.Save("c:\temp\ethernet.xml")
 
 </#>
+
+}
+
+If ($uninstall)
+
+{
+#If uninstall we should just need to Stopp the Service and return to a Manual Startup Type
+#Yes I know settings will be held we can work on some more logic later
+
+#Service is set to manual by default
+Get-Service -Name dot3svc | Set-Service -StartupType Manual
+
+#Start the Service if not running
+Get-Service -Name dot3svc | Set-Service -Status Stopped 
+
+#Reconnect the Interfaces
+netsh lan reconnect interface=*
+
+}
+
+else
+
+{
+Write-Host "No Options Selected"| Out-null
+}
