@@ -1,4 +1,16 @@
-﻿#Windows 10 Post Configuration Script
+﻿#Setting some parameters to make this work for intune.
+#Create an Install.cmd with - powershell.exe -executionpolicy bypass -command "& '.\802.1xconfig.ps1' 1"
+#Create an Uninstall.cmd with - powershell.exe -executionpolicy bypass -command "& '.\802.1xconfig.ps1' 0"
+#Put this script in the same working folder
+#Package it with the https://github.com/Microsoft/Microsoft-Win32-Content-Prep-Tool
+
+Param
+(
+[Parameter(Mandatory=$true,Position=0)]
+[String]$Value
+)
+
+#Windows 10 Post Configuration Script
 #Turn on 802.1x Authentication Tab on the Network Adapter Properties
 #Deploy the Root Certificates first using Intune
 
