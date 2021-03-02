@@ -49,6 +49,10 @@ netsh lan add profile filename="c:\temp\ethernet.xml" interface="Ethernet 2"
 #Reconnect the Interfaces
 netsh lan reconnect interface=*
 
+#Now we need a simple detection Method for the App It will just check to see if this file is here.
+
+New-Item c:\temp\802.1x.installed.log -ItemType file -Force | out-null 
+
 <#>
 #Working
 
