@@ -135,7 +135,7 @@ Get-Service -Name dot3svc | Stop-Service -Force
 netsh lan reconnect interface=*
 
 # Remove the Detection for the App on Uninstall
-Get-Item -Path "HKLM:\Software\Intune Detection" -Name "8021x"| Remove-Item -Force
+Get-Item -Path "HKLM:\Software\Intune Detection\8021x"| Remove-Item -Force
 
 
 
