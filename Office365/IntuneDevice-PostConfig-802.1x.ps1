@@ -104,7 +104,7 @@ If ($uninstall)
 Get-Service -Name dot3svc | Set-Service -StartupType Manual
 
 #Start the Service if not running
-Get-Service -Name dot3svc | Set-Service -Status Stopped 
+Get-Service -Name dot3svc | Stop-Service -Force
 
 #Reconnect the Interfaces
 netsh lan reconnect interface=*
