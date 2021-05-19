@@ -1,0 +1,155 @@
+CGYRDMASW01 [my-mlag-vip: standby] # sho run
+##
+## Running database "TOR1"
+## Generated at 2021/05/05 12:51:33 -0600
+## Hostname: CGYRDMASW01
+## Product release: 3.9.1908
+##
+
+##
+## Running-config temporary prefix mode setting
+##
+no cli default prefix-modes enable
+
+##
+## Interface Ethernet buffer configuration
+##
+   roce lossless
+
+##
+## MLAG protocol
+##
+   protocol mlag
+
+##
+## Interface Ethernet configuration
+##
+   interface port-channel 1
+   interface ethernet 1/1-1/14 mtu 9216 force
+   interface ethernet 1/1-1/14 switchport mode trunk
+   interface ethernet 1/15-1/16 channel-group 1 mode active
+   interface ethernet 1/1 description "CGYS2D1-MLX2"
+   interface ethernet 1/2 description "CGYS2D2-MLX2"
+   interface ethernet 1/3 description "CGYS2D3-MLX2"
+   interface ethernet 1/4 description "CGYS2D4-MLX2"
+   interface ethernet 1/15 description "VRRP CGYRDMASW02-15"
+   interface ethernet 1/16 description "VRRP CGYRDMASW02-16"
+   interface loopback 0 description "Loopback0"
+   interface loopback 1 description "Loopback1"
+   interface port-channel 1 description "Port Channel for IPL"
+   interface vlan 619 description "SMB_1"
+   interface vlan 620 description "SMB_2"
+
+##
+## LAG configuration
+##
+   lacp
+
+##
+## VLAN configuration
+##
+   vlan 617-620
+   vlan 4000
+   vlan 617 name "HB"
+   vlan 618 name "LM"
+   vlan 619 name "SMB_1"
+   vlan 620 name "SMB_2"
+
+##
+## L3 configuration
+##
+   ip routing vrf default
+   interface loopback 0
+   interface loopback 1
+   interface vlan 619
+   interface vlan 620
+   interface vlan 4000
+   interface vlan 619 ip address 10.120.19.2/24 primary
+   interface vlan 620 ip address 10.120.20.2/24 primary
+   interface vlan 4000 ip address 10.10.10.1/24 primary
+   interface vlan 619-620 mtu 9216
+
+##
+## MLAG configurations
+##
+   mlag-vip my-mlag-vip ip 10.10.0.235 /24 force
+no mlag shutdown
+   mlag system-mac 00:00:5E:00:01:5D
+   interface port-channel 1 ipl 1
+   interface vlan 4000 ipl 1 peer-address 10.10.10.2
+
+##
+## Network interface configuration
+##
+no interface mgmt0 dhcp
+no interface mgmt0 dhcp hostname
+   interface mgmt0 ip address 10.10.0.230 /24
+
+##
+## Network interface IPv6 configuration
+##
+no interface mgmt0 ipv6 address autoconfig default
+no interface mgmt0 ipv6 dhcp client enable
+no interface mgmt0 ipv6 enable
+
+##
+## Other IP configuration
+##
+   ip name-server 192.168.8.62
+   ip name-server 192.168.8.63
+   hostname CGYRDMASW01
+   ip domain-list Checkyourlogs.net
+   ip route vrf default 0.0.0.0/0 10.10.0.1
+
+##
+## VRRP configuration
+##
+   protocol vrrp
+   interface vlan 619 vrrp 8
+   interface vlan 619 vrrp 8 priority 200
+   interface vlan 620 vrrp 9
+   interface vlan 619 vrrp 8 address 10.120.19.1
+   interface vlan 620 vrrp 9 address 10.120.20.1
+
+##
+## Local user account configuration
+##
+   username admin password 7 blah
+   username escdjohnson capability admin
+no username escdjohnson disable
+   username escdjohnson full-name "Dave Kawula"
+   username escdjohnson password 7 blah
+   username monitor password 7 blah
+
+##
+## AAA remote server configuration
+##
+# ldap bind-password ********
+# radius-server key ********
+# tacacs-server key ********
+
+##
+## Network management configuration
+##
+# web proxy auth basic password ********
+   clock timezone America North Canada Other Edmonton
+   email autosupport enable
+   email mailhub 192.168.8.68
+   email return-addr CGYRDMASW01
+no email return-host
+no ntp server 192.168.8.62 disable
+   ntp server 192.168.8.62 keyID 0
+no ntp server 192.168.8.62 trusted-enable
+   ntp server 192.168.8.62 version 4
+
+##
+## X.509 certificates configuration
+##
+#
+# Certificate name system-self-signed, ID 221160f01da1aca41b708b3b016de38ba60b4bdd
+# (public-cert config omitted since private-key config is hidden)
+
+##
+## Persistent prefix mode setting
+##
+cli default prefix-modes enable
