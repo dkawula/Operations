@@ -738,16 +738,12 @@ PROCESS
 
                             $Subject = "PS MONITORING - $($GroupName.SamAccountName) Membership Change"
 
-                            $EmailTo = "BLAH","BLAH"
+                            $EmailTo = @('BLAH','BLAH')
 
                             #Mail the Report
                             #If ($MailTo -and $MailFrom -and $MailServer)
-                            #Fore Mail to go with Hard Coded Parameters for now
-                                Foreach ($Email in $Emailto)
-                            {
-                                Send-MailMessage -From $EmailFrom -To $Email -SmtpServer $SMTPServer -Credential $credential -Port 587 -Subject $Subject -Encoding UTF8 -BodyAsHtml -Body $body
-
-                                }
+                            
+                            Send-MailMessage -From $EmailFrom -To $Email -SmtpServer $SMTPServer -Credential $credential -Port 587 -Subject $Subject -Encoding UTF8 -BodyAsHtml -Body $body
 
                             #Send-MailMessage -smtpServer $SMTPServer -Credential $credential -Port 587 -from $EmailFrom -to $EmailTo -subject $Subject -Body $emailbody -BodyAsHtml 
 
