@@ -1,0 +1,76 @@
+Defining the process for patching with Veeam - HCI Cluster Nodes Hot Patching
+#.5 - Advise the Team of Patching
+#1 Disable the Veeam Backup and Replica Job
+#2 Disable the Remote Replica Jobs
+#3 Disable the Backup Jobs
+#2 Run the Job for the Local Target only - For a quick local restore
+#3 Check access to IPMI - BMC Cold Reset if you can't access
+#4 Validate remote console access
+#5 Put Cluster in Maintenance Mode Veeam One Alerting
+#6 Ensure that the is N-RAM Free Space --> If 256 GB of RAM must be lower than total 240 GB of RAM in use in the cluster for failover fail back
+#7 If required shut down non critical workloads to achieve #6
+#8 Check the cluster Witness, Cluster Name Object, Cluster IP, Cluster Networks
+#9 Run Get-Physicaldisk - ensure no errors
+#10 Run Get-VirtualDisk - ensure no errors
+#11 Run Get-StorageJob - eunsure no jobs / Get-dedupjob
+#12 Run Get-StoragePool - Validate health
+#13 Working on 1st Node - Ensure that Cluster Service is set to disabled Don't Stop the Service
+#14 Pause the node and Drain Roles - Dave likes to drain manually  - Live Migrating
+#15 Ensure the VM's are working start a Ping -t to several VM's
+#16 Start a Ping -t to the cluster node being patched
+#17 Once Live Migrations have completed Pause the Node
+#18 Move Cluster Core Resource to the other Node
+#19 Move the CSV Ownership to the other Node
+#20 Move the Cluster Pool Ownership to the other Node
+#21 Optional - Configure Storage Maint Mode --> We disable the Cluster Service so in effect kind of the same idea
+#22 Run Windows update pass #1 - Reboot
+#23 While Rebooting go to the Console IPMI Screen and make sure everything is good on reboot 
+#24 Checking Pings to make sure Cluster is still online
+#25 Upon Reboot login and run another Windows Update pass and reboot #2
+#26 While Rebooting go to the console IPMI Screen and make sure everything is good on reboot
+#27 Checking pings to make sure cluster is still online
+#28 upon Reboot login and run another Windows Update pass and reboot #3
+#29 Checking pings to make sure cluster is still online
+#30 Login and check event logs for errors
+#31 Change the Cluster Service back to Automatic
+#32 Open Failover CLuster Manager and Start the Cluster Service
+#33 Node should show paused leave it this way for now
+#34 open Admin PowerShell and run Get-StorageJob - Waiting for Jobs to complete
+#35 run get-virtual disk - Disks should show healthy and not degraded or detached
+#36 run get-storagepool make sure everything is healthy
+#37 if healthy - Unpause the node and Livemigrate roles back
+#38 Check pings on VM's should only drop 1 ping when moving back
+#39 Check the cluster Witness, Cluster Name Object, Cluster IP, Cluster Networks
+#40 Run Get-Physicaldisk - ensure no errors
+#41 Run Get-VirtualDisk - ensure no errors
+#42 Run Get-StorageJob - eunsure no jobs
+#43 Run Get-StoragePool - Validate health
+#44 Working on 2nd Node - Ensure that Cluster Service is set to disabled Don't Stop the Service
+#45 Pause the node and Drain Roles - Dave likes to drain manually  - Live Migrating
+#46 Ensure the VM's are working start a Ping -t to several VM's
+#46-a Make sure all VM's are online and none are in a failed state --> Like the MX Patching where Loren went down and had to be failed over..
+#47 Start a Ping -t to the cluster node being patched
+#48 Once Live Migrations have completed Pause the Node
+#49 Move Cluster Core Resource to the other Node
+#50 Move the CSV Ownership to the other Node
+#51 Move the Cluster Pool Ownership to the other Node
+#52 Optional - Configure Storage Maint Mode --> We disable the Cluster Service so in effect kind of the same idea
+#53 Run Windows update pass #1 - Reboot
+#54 While Rebooting go to the Console IPMI Screen and make sure everything is good on reboot 
+#55 Checking Pings to make sure Cluster is still online
+#56 Upon Reboot login and run another Windows Update pass and reboot #2
+#57 While Rebooting go to the console IPMI Screen and make sure everything is good on reboot
+#58 Checking pings to make sure cluster is still online
+#59 upon Reboot login and run another Windows Update pass and reboot #3
+#60 Checking pings to make sure cluster is still online
+#61 Login and check event logs for errors
+#62 Change the Cluster Service back to Automatic
+#63 Open Failover CLuster Manager and Start the Cluster Service
+#64 Node should show paused leave it this way for now
+#65 open Admin PowerShell and run Get-StorageJob - Waiting for Jobs to complete
+#66 run get-virtual disk - Disks should show healthy and not degraded or detached
+#67 run get-storagepool make sure everything is healthy
+#68 Move out of maint mode on VeeamOne
+#69 Inform the team to test after patching is complete
+#70 Close out the ticket and patching complete
+#71 Reenable the Veeam Jobs
