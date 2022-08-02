@@ -1,9 +1,5 @@
 Lab Commands
 
-Lab Username
-LabAdmin
-TM#123456()()()
-
 Lab 1 - Migrating ADDS
 Exercise 1.1
 
