@@ -53,7 +53,7 @@ Netdom Query FSMO
 Exercise 1.6
 
 Install-WindowsFeature AD-Domain-Services 
-ADDSDeployment module by running Import-Module ADDSDeployment -verbose
+Import-Module ADDSDeployment -verbose
 Test-ADDSDomainControllerInstallation -DomainName Techmentor.com
 Install-ADDSDomainController -CreateDnsDelegation:$false -InstallDns:$true -DatabasePath 'C:\Windows\NTDS' -DomainName 'Techmentor.com'
 ipconfig /registerdns
