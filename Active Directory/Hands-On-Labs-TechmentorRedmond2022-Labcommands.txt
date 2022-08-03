@@ -110,7 +110,7 @@ gpupdate /force
 gpresult /z 
 w32tm /query /peers
 Enter-PSSession -ComputerName TMDC04
-Cmd.exe
+cmd.exe
 Gpupdate /force
 Gpresult /z
 W32tm /query /peers
@@ -119,7 +119,7 @@ Exercise 1.13
 
 Exercise 1.14
 
-Get-ADDomain | select domain mode, DistinguishedName
+Get-ADDomain | select domainmode,DistinguishedName
 Get-ADForest | select forestMode
 Get-ADDomain –identity techmentor.com
 $pdc = Get-ADDomainController -Discover -Service PrimaryDC
@@ -129,23 +129,23 @@ Set-ADForestMode -Identity $pdc.Domain -Server $pdc.HostName[0] -Forest Windows2
 Get-ADDomain | select domainMode, DistinguishedName 
 Get-ADForest | select forestMode
 
-Lab 2 - Migrating DHCP
 
-Install the DHCP Role Add-WindowsFeature DHCP -IncludeMangementTools
+Lab 2 - Protecting VM's using Azure Hybrid and Azure Site Recovery
+Exercise 2.1
+
+## Download the msi file
+Invoke-WebRequest 'https://aka.ms/WACDownload' -OutFile "$pwd\WAC.msi"
+
+## install windows admin center
+$msiArgs = @("/i", "$pwd\WAC.msi", "/qn", "/L*v", "log.txt", "SME_PORT=443", "SSL_CERTIFICATE_OPTION=generate")
+Start-Process msiexec.exe -Wait -ArgumentList $msiArgs 
 
 
-Lab 3 - Migrating DNS
+Lab 3 - Migrating Files Servers using the Storage Migration Service
+Exercise 3.1
 
-Exercise 3.3
-
-New-Item -Itemtype Directory -Path C:\ -Name Post-Install
-
-Invoke-WebRequest -Uri " https://raw.githubusercontent.com/dkawula/Migrating-to-Server-2019-Active-Directory/master/DNSFunctions.ps1" -OutFile "C:\Post-Install\DNSFunctions.ps1"
-Import-Module c:\post-install\DNSFunctions.ps1
-Backup-DNSServerZoneAll -computername TMDC03
-Export-DNSServerIPConfiguration -Domain techmentor.com
-Add-DNSServerPrimaryZone -Name “Techmentorlab.local” -zonefile “Techmentorlab.local.dns” -verbose
-Copy-DNSServerZOne -srcserver TMDC03 -SrcZone Techmentorlab.local -DestServer TMDC04 -DestZone Techmentorlab.local -StaleDays 25
+DISM /Online /Set-Edition:ServerStandard /ProductKey: N69G4-B89J2-4G8F4-WWYCC-J464C
+/AcceptEula
 
 
 Lab 4 - Upgrading IIS Servers
@@ -159,8 +159,6 @@ New-Item -Itemtype Directory -Path C:\ -Name Post-Install
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 Invoke-WebRequest -Uri " https://raw.githubusercontent.com/dkawula/Migrating-to-Server-2019-Active-Directory/master/Chapter_15_Sample_WordPressSite_WithMySQL_Install.ps1" -OutFile "C:\Post-Install\Install-WordPress.ps1"
-
-
 
 Exercise 4.3
 
@@ -178,10 +176,12 @@ $w3wpPath = $Env:WinDir + "\System32\inetsrv\w3wp.exe"
 
 dism /online /get-currentedition
 dism /online /get-targeteditions
-Dism /online /set-edition:ServerStandard /productkey: D2N9P-3P6X9-2R39C-7RTCD-MDVJX /accepteula 
+Dism /online /set-edition:ServerStandard /productkey:D2N9P-3P6X9-2R39C-7RTCD-MDVJX /accepteula 
 
 VDYBN-27WPP-V4HQT-9VMD4-VMK7H 
 
+
+Lab 5 -  Migrating Print Servers
 
 Exercise 5.2
 
@@ -193,7 +193,27 @@ New-Item -Itemtype Directory -Path C:\ -Name Post-Install
 Invoke-WebRequest -Uri " https://raw.githubusercontent.com/dkawula/Operations/master/Active%20Directory/DisableStrictNameChecking.ps1" -OutFile "C:\Post-Install\DisableStrictNameChecking.ps1"
 
 
-Exercise 6.1
+Lab 7 - Migrating DHCP
+
+Install the DHCP Role Add-WindowsFeature DHCP -IncludeMangementTools
+
+
+Lab 8 - Migrating DNS
+
+Exercise 8.3
+
+New-Item -Itemtype Directory -Path C:\ -Name Post-Install
+
+Invoke-WebRequest -Uri " https://raw.githubusercontent.com/dkawula/Migrating-to-Server-2019-Active-Directory/master/DNSFunctions.ps1" -OutFile "C:\Post-Install\DNSFunctions.ps1"
+Import-Module c:\post-install\DNSFunctions.ps1
+Backup-DNSServerZoneAll -computername TMDC03
+Export-DNSServerIPConfiguration -Domain techmentor.com
+Add-DNSServerPrimaryZone -Name “Techmentorlab.local” -zonefile “Techmentorlab.local.dns” -verbose
+Copy-DNSServerZOne -srcserver TMDC03 -SrcZone Techmentorlab.local -DestServer TMDC04 -DestZone Techmentorlab.local -StaleDays 25
+
+
+Lab 9 - Upgrading Storage Spaces
+Exercise 9.1
 
 Get-PhysicalDisk
 Get-VirtualDisk
@@ -216,25 +236,10 @@ Get-StoragePool
 fsutil fsinfo refsinfo d:
 
 
-Exercise 7.1
-
-## Download the msi file
-Invoke-WebRequest 'https://aka.ms/WACDownload' -OutFile "$pwd\WAC.msi"
-
-## install windows admin center
-$msiArgs = @("/i", "$pwd\WAC.msi", "/qn", "/L*v", "log.txt", "SME_PORT=443", "SSL_CERTIFICATE_OPTION=generate")
-Start-Process msiexec.exe -Wait -ArgumentList $msiArgs 
-
-Exercise 8.1
-
-DISM /Online /Set-Edition:ServerStandard /ProductKey: N69G4-B89J2-4G8F4-WWYCC-J464C
-/AcceptEula
 
 
 
-Exercise 9.1
 
-https://www.microsoft.com/en-us/download/details.aspx?id=55319
 
 
 
