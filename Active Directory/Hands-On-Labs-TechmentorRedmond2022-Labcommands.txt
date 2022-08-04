@@ -144,8 +144,7 @@ Start-Process msiexec.exe -Wait -ArgumentList $msiArgs
 Lab 3 - Migrating Files Servers using the Storage Migration Service
 Exercise 3.1
 
-DISM /Online /Set-Edition:ServerStandard /ProductKey: N69G4-B89J2-4G8F4-WWYCC-J464C
-/AcceptEula
+DISM /Online /Set-Edition:ServerStandard /ProductKey:N69G4-B89J2-4G8F4-WWYCC-J464C /AcceptEula
 
 
 Lab 4 - Upgrading IIS Servers
