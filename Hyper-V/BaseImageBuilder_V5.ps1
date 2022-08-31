@@ -182,6 +182,35 @@ function New-UnattendFile1
     $unattend.Save($filePath)
 }
 
+function New-UnattendFile2 
+{
+    param
+    (
+        [string] $filePath
+    ) 
+
+    # Reload template - clone is necessary as PowerShell thinks this is a "complex" object
+    $unattend = $unattendSource.Clone()
+     
+    # Customize unattend XML
+   # Get-UnattendChunk 'specialize' 'Microsoft-Windows-Shell-Setup' $unattend | ForEach-Object -Process {
+    #    $_.RegisteredOrganization = 'Azure Sea Class Covert Trial' #TR-Egg
+   # }
+   # Get-UnattendChunk 'specialize' 'Microsoft-Windows-Shell-Setup' $unattend | ForEach-Object -Process {
+   #     $_.RegisteredOwner = 'Thomas Rayner - @MrThomasRayner - workingsysadmin.com' #TR-Egg
+   # }
+    Get-UnattendChunk 'specialize' 'Microsoft-Windows-Shell-Setup' $unattend | ForEach-Object -Process {
+        $_.TimeZone = $Timezone
+    }
+    Get-UnattendChunk 'oobeSystem' 'Microsoft-Windows-Shell-Setup' $unattend | ForEach-Object -Process {
+        $_.UserAccounts.AdministratorPassword.Value = $adminPassword
+    }
+    
+
+    Clear-File $filePath
+    $unattend.Save($filePath)
+}
+
 Function Download-ConvertWindowsImage
 
 {
@@ -212,7 +241,7 @@ If ($IncludeWindows2022GUI)
 {
     
     #New-UnattendFile "$($WorkingDir)\unattend.xml"
-    New-UnattendFile1 "$($WorkingDir)\unattend1.xml"
+    New-UnattendFile1 "$($WorkingDir)\Autounattend.xml"
 
 
     #Build the Windows 2022 Core Base VHDx for the Lab
@@ -235,7 +264,10 @@ If ($IncludeWindows2022GUI)
                 WorkingDirectory = $workingdir
                 VHDPath = "$($BaseVHDPath)\VMServerBase2022.vhdx"
                 DiskLayout = 'UEFI'
-                UnattendPath = "$($workingdir)\unattend1.xml" 
+                UnattendPath = "$($workingdir)\autounattend.xml" 
+                Package = @(  
+                             "$LatestCU"    
+                            )  
             }
 
             $VHDx = Convert-WindowsImage @ConvertWindowsImageParam
@@ -247,11 +279,11 @@ if ($IncludeWindows2022Core)
             
     
     #New-UnattendFile "$($WorkingDir)\unattend.xml"
-    New-UnattendFile1 "$($WorkingDir)\unattend1.xml"
+    New-UnattendFile2 "$($WorkingDir)\autounattend.xml"
   
 
       
-            if (!(Test-Path "$($BaseVHDPath)\VMServerCore2019.vhdx")) 
+            if (!(Test-Path "$($BaseVHDPath)\VMServerCore2022.vhdx")) 
                         {
             
 
@@ -269,7 +301,10 @@ if ($IncludeWindows2022Core)
                 WorkingDirectory = $workingdir
                 VHDPath = "$($BaseVHDPath)\VMServerCore2022.vhdx"
                 DiskLayout = 'UEFI'
-                UnattendPath = "$($workingdir)\unattend1.xml" 
+                UnattendPath = "$($workingdir)\autounattend.xml"
+                Package = @(  
+                             "$LatestCU"    
+                            )  
             }
 
             $VHDx = Convert-WindowsImage @ConvertWindowsImageParam
@@ -441,9 +476,9 @@ function Download-BaseImageUpdates
 {
 
  
-            if (!(Test-Path "$($BaseVHDPath)\windows10.0-kb3213986-x64_a1f5adacc28b56d7728c92e318d6596d9072aec4.msu")) 
+            if (!(Test-Path "$($BaseVHDPath)\windows10.0-kb5016627-x64_46b7a22c4135299fd98ca9775211cf86e1ef7108.msu")) 
                         {
-    Invoke-WebRequest -Uri http://download.windowsupdate.com/d/msdownload/update/software/secu/2016/12/windows10.0-kb3213986-x64_a1f5adacc28b56d7728c92e318d6596d9072aec4.msu -OutFile "$($BaseVHDPath)\windows10.0-kb3213986-x64_a1f5adacc28b56d7728c92e318d6596d9072aec4.msu" -Verbose
+    Invoke-WebRequest -Uri https://catalog.s.download.windowsupdate.com/c/msdownload/update/software/secu/2022/08/windows10.0-kb5016627-x64_46b7a22c4135299fd98ca9775211cf86e1ef7108.msu -OutFile "$($BaseVHDPath)\windows10.0-kb5016627-x64_46b7a22c4135299fd98ca9775211cf86e1ef7108.msu " -Verbose
     }
     }
 
@@ -453,7 +488,7 @@ function Get-LatestCU
 
         [reflection.assembly]::loadwithpartialname("System.Windows.Forms")
         $openFile = New-Object System.Windows.Forms.OpenFileDialog -Property @{
-            Title="Please select .MSU Update Package for Windows 2016"
+            Title="Please select .MSU Update Package for Windows 2022"
         }
         $openFile.Filter = "msu files (*.msu)|*.msu|All files (*.*)|*.*" 
         If($openFile.ShowDialog() -eq "OK")
@@ -598,7 +633,6 @@ $unattendSource = [xml]@"
     <settings pass="specialize">
         <component name="Microsoft-Windows-Shell-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
             <ComputerName>*</ComputerName>
-            <ProductKey>$WindowsKey</ProductKey> 
             <RegisteredOrganization>Organization</RegisteredOrganization>
             <RegisteredOwner>Owner</RegisteredOwner>
             <TimeZone>TZ</TimeZone>
@@ -637,6 +671,7 @@ Write-Log 'Host' 'Getting started...'
 Confirm-Path $BaseVHDPath
 Write-Log 'Host' 'Building Base Images'
 #Write-Log 'Host' 'Downloading January 2018 CU for Windows Server 2016'
+#. Download-BaseImageUpdates
 Write-Log 'Host' 'Locate the Windows Server 2016 ISO'
  if ($IncludeWindows2016GUI)
 
@@ -669,10 +704,12 @@ Write-Log 'Host' 'Locate the Windows Windows Server 2022 ISO'
 if ($IncludeWindows2022GUI)
 {   
     . Get-ISOUI2
+    . Get-LatestCU
     }
 elseif ($IncludeWindows2022Core)
 {
     . Get-ISOUI2
+    . Get-LatestCU
 }
  
  
