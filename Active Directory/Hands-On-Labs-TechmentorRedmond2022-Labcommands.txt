@@ -147,9 +147,40 @@ Exercise 3.1
 DISM /Online /Set-Edition:ServerStandard /ProductKey:N69G4-B89J2-4G8F4-WWYCC-J464C /AcceptEula
 
 
-Lab 4 - Upgrading IIS Servers
+Lab 4 -  Migrating Print Servers
 
-Exercise 4.1 
+Exercise 4.2
+
+add-windowsfeature print-server -verbose
+
+add-windowsfeature RSAT-Print-Services -Verbose
+
+New-Item -Itemtype Directory -Path C:\ -Name Post-Install
+Invoke-WebRequest -Uri " https://raw.githubusercontent.com/dkawula/Operations/master/Active%20Directory/DisableStrictNameChecking.ps1" -OutFile "C:\Post-Install\DisableStrictNameChecking.ps1"
+
+
+Lab 6 - Migrating DHCP
+
+Install the DHCP Role Add-WindowsFeature DHCP -IncludeMangementTools
+
+
+Lab 7 - Migrating DNS
+
+Exercise 7.3
+
+New-Item -Itemtype Directory -Path C:\ -Name Post-Install
+
+Invoke-WebRequest -Uri " https://raw.githubusercontent.com/dkawula/Migrating-to-Server-2019-Active-Directory/master/DNSFunctions.ps1" -OutFile "C:\Post-Install\DNSFunctions.ps1"
+Import-Module c:\post-install\DNSFunctions.ps1
+Backup-DNSServerZoneAll -computername TMDC03
+Export-DNSServerIPConfiguration -Domain techmentor.com
+Add-DNSServerPrimaryZone -Name “Techmentorlab.local” -zonefile “Techmentorlab.local.dns” -verbose
+Copy-DNSServerZOne -srcserver TMDC03 -SrcZone Techmentorlab.local -DestServer TMDC04 -DestZone Techmentorlab.local -StaleDays 25
+
+
+Lab 8 - Upgrading IIS Servers
+
+Exercise 8.1 
 
 https://go.microsoft.com/fwlink/?linkid=839516
 
@@ -159,7 +190,7 @@ New-Item -Itemtype Directory -Path C:\ -Name Post-Install
 
 Invoke-WebRequest -Uri " https://raw.githubusercontent.com/dkawula/Migrating-to-Server-2019-Active-Directory/master/Chapter_15_Sample_WordPressSite_WithMySQL_Install.ps1" -OutFile "C:\Post-Install\Install-WordPress.ps1"
 
-Exercise 4.3
+Exercise 8.3
 
 
 
@@ -178,68 +209,6 @@ dism /online /get-targeteditions
 Dism /online /set-edition:ServerStandard /productkey:D2N9P-3P6X9-2R39C-7RTCD-MDVJX /accepteula 
 
 VDYBN-27WPP-V4HQT-9VMD4-VMK7H 
-
-
-Lab 5 -  Migrating Print Servers
-
-Exercise 5.2
-
-add-windowsfeature print-server -verbose
-
-add-windowsfeature RSAT-Print-Services -Verbose
-
-New-Item -Itemtype Directory -Path C:\ -Name Post-Install
-Invoke-WebRequest -Uri " https://raw.githubusercontent.com/dkawula/Operations/master/Active%20Directory/DisableStrictNameChecking.ps1" -OutFile "C:\Post-Install\DisableStrictNameChecking.ps1"
-
-
-Lab 7 - Migrating DHCP
-
-Install the DHCP Role Add-WindowsFeature DHCP -IncludeMangementTools
-
-
-Lab 8 - Migrating DNS
-
-Exercise 8.3
-
-New-Item -Itemtype Directory -Path C:\ -Name Post-Install
-
-Invoke-WebRequest -Uri " https://raw.githubusercontent.com/dkawula/Migrating-to-Server-2019-Active-Directory/master/DNSFunctions.ps1" -OutFile "C:\Post-Install\DNSFunctions.ps1"
-Import-Module c:\post-install\DNSFunctions.ps1
-Backup-DNSServerZoneAll -computername TMDC03
-Export-DNSServerIPConfiguration -Domain techmentor.com
-Add-DNSServerPrimaryZone -Name “Techmentorlab.local” -zonefile “Techmentorlab.local.dns” -verbose
-Copy-DNSServerZOne -srcserver TMDC03 -SrcZone Techmentorlab.local -DestServer TMDC04 -DestZone Techmentorlab.local -StaleDays 25
-
-
-Lab 9 - Upgrading Storage Spaces
-Exercise 9.1
-
-Get-PhysicalDisk
-Get-VirtualDisk
-Get-StoragePool
-
-
-You must run DISM /Online /Set-Edition:ServerDataCenter /ProductKey: CB7KF-BWN84-R7R2Y-793K2-8XDDG /AcceptEula
-
-Get-PhysicalDisk
-Get-VirtualDisk
-Get-StoragePool
-
-fsutil fsinfo refsinfo d: 
-WX4NM-KYWYW-QJJR4-XV3QB-6VM33
-
-Get-PhysicalDisk
-Get-VirtualDisk
-Get-StoragePool
-
-fsutil fsinfo refsinfo d:
-
-
-
-
-
-
-
 
 
 
