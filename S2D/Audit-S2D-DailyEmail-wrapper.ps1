@@ -23,10 +23,10 @@ Set-Location $path
 
 }
 
-  }
+  
   
   Else
      {
      Write-Host $Node is "offline"
      }
-     
+     }
