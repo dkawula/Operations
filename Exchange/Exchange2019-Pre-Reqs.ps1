@@ -27,7 +27,7 @@ $url = "https://download.visualstudio.microsoft.com/download/pr/014120d7-d689-43
 $outfile = "$folder\ndp48-x86-x64-allos-enu.exe"
 Invoke-WebRequest $url -OutFile $outfile
 
-Start-Process -FilePath $outfile -ArgumentList "/q" -Wait
+Start-Process -FilePath $outfile -ArgumentList "/q /norestart" -Wait
 
 }
 
