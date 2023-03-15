@@ -11,12 +11,25 @@
 $Nodes = 'ServerA','ServerB'
 $Nodes
 
-Invoke-Command $nodes {Install-WindowsFeature Server-Media-Foundation, NET-Framework-45-Features, RPC-over-HTTP-proxy, RSAT-Clustering, RSAT-Clustering-CmdInterface, RSAT-Clustering-Mgmt, RSAT-Clustering-PowerShell, WAS-Process-Model, Web-Asp-Net45, Web-Basic-Auth, Web-Client-Auth, Web-Digest-Auth, Web-Dir-Browsing, Web-Dyn-Compression, Web-Http-Errors, Web-Http-Logging, Web-Http-Redirect, Web-Http-Tracing, Web-ISAPI-Ext, Web-ISAPI-Filter, Web-Lgcy-Mgmt-Console, Web-Metabase, Web-Mgmt-Console, Web-Mgmt-Service, Web-Net-Ext45, Web-Request-Monitor, Web-Server, Web-Stat-Compression, Web-Static-Content, Web-Windows-Auth, Web-WMI, Windows-Identity-Foundation, RSAT-ADDS}
 
 #Next Download and Install Visual C++ Redistributable Package for Visual Studio 2012. 
 #https://www.microsoft.com/download/details.aspx?id=30679
 
 # Define the URL of the download
+
+Invoke-Command $Nodes {
+$folder = "c:\post-install\exchange-prereqs"
+if (-not (Test-Path $folder)) {
+    New-Item -ItemType Directory -Path $folder
+}
+
+$url = "https://download.visualstudio.microsoft.com/download/pr/014120d7-d689-4305-befd-3cb711108212/0fd66638cde16859462a6243a4629a50/ndp48-x86-x64-allos-enu.exe"
+$outfile = "$folder\ndp48-x86-x64-allos-enu.exe"
+Invoke-WebRequest $url -OutFile $outfile
+
+Start-Process -FilePath $outfile -ArgumentList "/q" -Wait
+
+}
 
 
 Invoke-Command $Nodes {
@@ -60,6 +73,9 @@ Invoke-WebRequest $url -OutFile $outfile
 Start-Process msiexec.exe -ArgumentList "/i `"$outfile`" /quiet" -Wait
 
 }
+
+Invoke-Command $nodes {Install-WindowsFeature Server-Media-Foundation, NET-Framework-45-Features, RPC-over-HTTP-proxy, RSAT-Clustering, RSAT-Clustering-CmdInterface, RSAT-Clustering-Mgmt, RSAT-Clustering-PowerShell, WAS-Process-Model, Web-Asp-Net45, Web-Basic-Auth, Web-Client-Auth, Web-Digest-Auth, Web-Dir-Browsing, Web-Dyn-Compression, Web-Http-Errors, Web-Http-Logging, Web-Http-Redirect, Web-Http-Tracing, Web-ISAPI-Ext, Web-ISAPI-Filter, Web-Lgcy-Mgmt-Console, Web-Metabase, Web-Mgmt-Console, Web-Mgmt-Service, Web-Net-Ext45, Web-Request-Monitor, Web-Server, Web-Stat-Compression, Web-Static-Content, Web-Windows-Auth, Web-WMI, Windows-Identity-Foundation, RSAT-ADDS}
+
 
 #download Exchange Server 2019 CU 12 from here
 
@@ -285,9 +301,44 @@ Get-MoveRequest -MoveStatus Completed | Remove-MoveRequest
 
 #endregion
 
+#region 014 - Migrate Discovery Search Mailbox
+
+Get-Mailbox -RecipientTypeDetails 
+DiscoveryMailbox | Format-Table Name, Database
+
+Get-Mailbox -RecipientTypeDetails DiscoveryMailbox | New-MoveRequest -TargetDatabase DB01-2019
+
+Get-MoveRequest | Get-MoveRequestStatistics
+Get-Mailbox -RecipientTypeDetails DiscoveryMailbox | Format-Table Name, Database
+
+Get-MoveRequest -MoveStatus Completed | Remove-MoveRequest
+
+#endregion
 
 
+#region 015 - Uninstall EX2013 Servers
 
+Get-MailboxDatabase -Server <Exchange 2016 server name> | Get-Mailbox | select Name,Database
+
+Remove-MailboxDatabase -Identity <mailbox database name>
+
+Remove-MailboxDatabaseCopy -Identity <mailbox database name>\<server name>
+
+Remove-DatabaseAvailabilityGroupServer -Identity <DAG name> -MailboxServer <server name>
+
+Get-PublicFolder -Server <server name> "\NON_IPM_SUBTREE" -Recurse -ResultSize:Unlimited | Remove-PublicFolder -Server <server name> -Recurse -ErrorAction:SilentlyContinue
+
+Get-PublicFolder -Server <server name> "\" -Recurse -ResultSize:Unlimited | Remove-PublicFolder -Server <server name> -Recurse -ErrorAction:SilentlyContinue
+
+.\MoveAllReplicas.ps1 -Server <source server name> -NewServer <destination server name>
+
+Remove-PublicFolderDatabase -Identity <public folder database name>
+
+Get-OfflineAddressBook
+
+Remove-OfflineAddressBook -identity <offline address book name>
+
+#endregion
 
 
 
