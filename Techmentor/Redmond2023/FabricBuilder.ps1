@@ -1341,7 +1341,7 @@ Function Install-SQL {
         $setup
         cmd.exe /c "$($Setup)\setup.exe /ConfigurationFile=$($SQLDrive)\SqlInstall.ini"
 
-        Write-Output -InputObject "[$($VMName)]:: Updating SQL Server 2019 with CU17"
+        Write-Output -InputObject "[$($VMName)]:: Updating SQL Server 2019 with the latest CU 21(ish)"
         cmd.exe /c "$($SQLDrive)\SQLServer2019-KB5016394-x64 /X:$($SQLDrive)\sqlserver_cu\KB5016394-64"
         cmd.exe /c "$($SQLDrive)\sqlserver_cu\KB5016394-64\setup.exe /action=patch /instancename=MSSQLSERVER /quiet /IAcceptSQLServerLicenseTerms"
 
