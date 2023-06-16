@@ -3440,7 +3440,7 @@ Create-ADusers -VMName $VMName
 Write-Output -InputObject "[$($VMName)]:: Creating AD Group Policy Objects for the Fabric" 
 Create-ADGPOs -VMName $VMName
 Write-Output -InputObject "[$($VMName)]:: Expanding MS Baselines and CIS Benchmarks" 
-Expand-Benchmarks -VMName $VMName 
+#Expand-Benchmarks -VMName $VMName 
 Write-Output -InputObject "[$($VMName)]:: Configuring AD Certificate Services" 
 Configure-ADCS -VMName $VMName
 #Write-Output -InputObject "[$($VMName)]:: Uninstalling Microsoft Edge" 
