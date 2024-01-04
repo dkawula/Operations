@@ -15,7 +15,7 @@ function IsProgramInstalled($computerName, $programName) {
 
 # Get all servers from Active Directory
 $servers = Get-ADComputer -Filter {OperatingSystem -like "Windows*Server*"} | Select-Object -ExpandProperty Name
-#$servers = 'pestilence'
+
 # Create an array to store results
 $results = @()
 
