@@ -34,6 +34,12 @@ Repadmin /syncall /e /d /a
 Repadmin /syncall /e /d /a /P
 Install-WindowsFeature RSAT-ADDS-Tools -verbose
 
+$pdc = Get-ADDomainController -Discover -Service PrimaryDC
+Set-ADDomainMode -Identity $pdc.Domain -Server $pdc.HostName[0] -Domain WIndows2016Domain
+$pdc = Get-ADDomainController -Discover -Service PrimaryDC
+Set-ADForestMode -Identity $pdc.Domain -Server $pdc.HostName[0] -Forest Windows2016Forest
+
+
 Exercise 1.4
 
 Get-ADForest Techmentor.com | Select SchemaMaster,DomainNamingMaster
@@ -60,15 +66,13 @@ Exercise 1.6
 Net Stop Netlogon & Net Start Netlogon
 
 Exercise 1.7
+uninstall-addsdomaincontroller -verbose
 
 Exercise 1.8
-ipconfig /registerdns
-net stop netlogon & Net start netlogon 
-Repadmin /kcc 
-Repadmin /syncall /e /d /a
-Repadmin /syncall /e /d /a /P
+uninstall-addsdomaincontroller -verbose
 
 Exercise 1.9
+
 
 ipconfig /registerdns
 net stop netlogon & Net start netlogon 
@@ -78,12 +82,21 @@ Repadmin /syncall /e /d /a /P
 
 Exercise 1.10
 
+ipconfig /registerdns
+net stop netlogon & Net start netlogon 
+Repadmin /kcc 
+Repadmin /syncall /e /d /a 
+Repadmin /syncall /e /d /a /P
+
+
+Exercise 1.11
+
 w32tm.exe /config /manualpeerlist:"0.pool.ntp.org,0x8 1.pool.ntp.org,0x8 2.pool.ntp.org,0x8" /syncfromflags:manual /update
 w32tm /config /reliable:yes
 net stop w32time && net start w32time
 w32tm /resync
 
-Exercise 1.11
+Exercise 1.12
 
 Select * from Win32_ComputerSystem where DomainRole = 5
 0.pool.ntp.org,0x8 1.pool.ntp.org,0x8 2.pool.ntp.org,0x8
@@ -122,7 +135,7 @@ Set-ADForestMode -Identity $pdc.Domain -Server $pdc.HostName[0] -Forest Windows2
 Get-ADDomain | select domainMode, DistinguishedName 
 Get-ADForest | select forestMode
 
-Exercise 1.16
+Exercise 1.15
 Install-WindowsFeature AD-Domain-Services 
 Import-Module ADDSDeployment -verbose
 $Credential = Get-Credential
