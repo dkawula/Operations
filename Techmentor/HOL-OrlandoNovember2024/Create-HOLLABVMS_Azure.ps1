@@ -2,10 +2,11 @@
 # PowerShell Script to Build the Student VM's for the HOL
 # This script configures 50 Student VM's from the TechmentorOrlando2024-HOL VMImage
 # It also creates 1 central NSG so that we can open up access easily to each of the student VM's
+# It creates a Public Static IP for the LAB VM's for external Access
 # Created by Dave Kawula - MVP
 $resourceGroup = "TMHOLMIGSRV2025"
 $location = "Canada Central" 
-$imageId = "/subscriptions/<Insert Subscription>/resourceGroups/<ResourceGroup>/providers/Microsoft.Compute/galleries/HoLGallery/images/TechmentorOrlando2024-HOL2/versions/2.1.0"
+$imageId = "/subscriptions/3bc59d7d-b822-4d55-bc1d-24c95ad5d3a5/resourceGroups/<ResourceGroup>/providers/Microsoft.Compute/galleries/HoLGallery/images/TechmentorOrlando2024-HOL2/versions/2.1.0"
 $sku = "Standard_D8s_v3" 
 $vmPrefix = "Student"
 $vnetName = "TMLABVNET04"
