@@ -32,7 +32,7 @@ if (-not (Get-AzNetworkSecurityGroup -Name $nsgName -ResourceGroupName $resource
     $nsg = Get-AzNetworkSecurityGroup -Name $nsgName -ResourceGroupName $resourceGroup
 }
 
-# Loop to create 5 VMs with unique names
+# Loop to create 50 VMs with unique names
 for ($i = 1; $i -le 50; $i++) {
     # Format the VM name as StudentXX (e.g., Student01, Student02)
     $vmName = "{0}{1:D2}" -f $vmPrefix, $i
