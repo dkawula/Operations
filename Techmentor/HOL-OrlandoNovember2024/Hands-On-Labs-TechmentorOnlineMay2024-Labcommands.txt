@@ -151,9 +151,6 @@ Repadmin /syncall /e /d /a /P
 Lab 2 - Protecting VM's using Azure Hybrid and Azure Site Recovery
 Exercise 2.1
 
-##Uninstall IIS that was installed on the HOST
-Uninstall-WindowsFeature -Name Web-Server -IncludeManagementTools -verbose
-
 ## Download the msi file ##
 Invoke-WebRequest 'https://aka.ms/WACDownload' -OutFile "$pwd\WAC.msi"
 
