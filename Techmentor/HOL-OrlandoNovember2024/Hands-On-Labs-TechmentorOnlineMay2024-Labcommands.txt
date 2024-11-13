@@ -14,7 +14,8 @@ Netdom Query FSMO
 repadmin /options TMDC02 +DISABLE_OUTBOUND_REPL
 D:
 CD \support\adprep
-Adprep.exe /forestprep 
+Adprep.exe /forestprep
+c 
 Adprep.exe /domainprep 
 repadmin /options TMDC02 -DISABLE_OUTBOUND_REPL
 repadmin /syncall /e /d /a /P
