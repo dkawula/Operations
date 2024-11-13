@@ -1,5 +1,6 @@
 ﻿#Needed to update the VM's to P30 to perform for the HoL Experience at Techmentor
 #This Script will change the OS Disks on the Student VM's to P30 - 5000 IOPS, 200 MB/s
+#P30	1 TiB	$170.92	$162.39	5,000 (30,000)	200 MB/second (1,000 MB/second)	$9.14
 #by Dave Kawula-MVP
 
 # Set your subscription context if needed
