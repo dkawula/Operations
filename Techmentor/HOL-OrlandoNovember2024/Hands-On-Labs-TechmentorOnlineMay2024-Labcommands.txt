@@ -154,7 +154,7 @@ Exercise 2.1
 ##Uninstall IIS that was installed on the HOST
 Uninstall-WindowsFeature -Name Web-Server -IncludeManagementTools -verbose
 
-## Download the msi file
+## Download the msi file ##
 Invoke-WebRequest 'https://aka.ms/WACDownload' -OutFile "$pwd\WAC.msi"
 
 ## install windows admin center
