@@ -1,4 +1,8 @@
-﻿# Install the Microsoft Graph PowerShell module if not already installed
+﻿#When running the HOL the Azure Tenant gets flooded with App Registrations for the WAC Gateway
+#This is a cleanup script to remove all WAC entries from the EntraID Tenant
+#By Dave Kawula - MVP
+
+# Install the Microsoft Graph PowerShell module if not already installed
 if (-not (Get-Module -ListAvailable -Name Microsoft.Graph)) {
     Install-Module Microsoft.Graph -Scope CurrentUser -Force
 }
