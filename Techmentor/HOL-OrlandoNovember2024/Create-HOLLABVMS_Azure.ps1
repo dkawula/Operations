@@ -6,7 +6,7 @@
 # Created by Dave Kawula - MVP
 $resourceGroup = "TMHOLMIGSRV2025"
 $location = "Canada Central" 
-$imageId = "/subscriptions/3bc59d7d-b822-4d55-bc1d-24c95ad5d3a5/resourceGroups/<ResourceGroup>/providers/Microsoft.Compute/galleries/HoLGallery/images/TechmentorOrlando2024-HOL2/versions/2.1.0"
+$imageId = "/subscriptions/<InsertSub>/resourceGroups/<ResourceGroup>/providers/Microsoft.Compute/galleries/HoLGallery/images/TechmentorOrlando2024-HOL2/versions/2.1.0"
 $sku = "Standard_D8s_v3" 
 $vmPrefix = "Student"
 $vnetName = "TMLABVNET04"
@@ -34,7 +34,7 @@ if (-not (Get-AzNetworkSecurityGroup -Name $nsgName -ResourceGroupName $resource
 }
 
 # Loop to create 50 VMs with unique names
-for ($i = 1; $i -le 50; $i++) {
+for ($i = 51; $i -le 60; $i++) {
     # Format the VM name as StudentXX (e.g., Student01, Student02)
     $vmName = "{0}{1:D2}" -f $vmPrefix, $i
 
