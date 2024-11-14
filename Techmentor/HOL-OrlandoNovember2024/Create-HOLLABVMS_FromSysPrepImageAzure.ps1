@@ -36,31 +36,47 @@ if (-not (Get-AzNetworkSecurityGroup -Name $nsgName -ResourceGroupName $resource
 $cred = Get-Credential
 
 for ($i = 1; $i -le 60; $i++) {
-    # Format the VM name as StudentXX (e.g., Student01, Student02)
-    $vmName = "{0}{1:D2}" -f $vmPrefix, $i
+    Start-Job -ScriptBlock {
+        param ($i, $vmPrefix, $resourceGroup, $location, $subnet, $nsg, $sku, $imageId, $cred)
 
-    # Check if the VM already exists
-    if (Get-AzVM -ResourceGroupName $resourceGroup -Name $vmName -ErrorAction SilentlyContinue) {
-        Write-Output "VM $vmName already exists. Skipping creation."
-        continue
-    }
+        # Ensure the Az module is imported within each job if necessary
+        Import-Module Az.Compute
+        Import-Module Az.Network
 
-    Write-Output "Creating VM $vmName..."
+        # Format the VM name as StudentXX (e.g., Student01, Student02)
+        $vmName = "{0}{1:D2}" -f $vmPrefix, $i
 
-    # Create a Public IP Address for the VM
-    $pip = New-AzPublicIpAddress -ResourceGroupName $resourceGroup -Location $location -Name "$vmName-Public-IP" -AllocationMethod Static -IdleTimeoutInMinutes 4
+        # Check if the VM already exists
+        if (Get-AzVM -ResourceGroupName $resourceGroup -Name $vmName -ErrorAction SilentlyContinue) {
+            Write-Output "VM $vmName already exists. Skipping creation."
+            return
+        }
 
-    # Create a Network Interface for the VM using the single NSG
-    $nic = New-AzNetworkInterface -Name "$vmName-nic" -ResourceGroupName $resourceGroup -Location $location -SubnetId $subnet.Id -PublicIpAddressId $pip.Id -NetworkSecurityGroupId $nsg.Id
+        Write-Output "Creating VM $vmName..."
 
-    # Configure the VM using the gallery image
-    $vmConfig = New-AzVMConfig -VMName $vmName -VMSize $sku |
-        Set-AzVMSourceImage -Id $imageId |
-        Add-AzVMNetworkInterface -Id $nic.Id
+        # Create a Public IP Address for the VM
+        $pip = New-AzPublicIpAddress -ResourceGroupName $resourceGroup -Location $location -Name "$vmName-Public-IP" -AllocationMethod Static -IdleTimeoutInMinutes 4
 
-    # Set the operating system configuration
-    $vmConfig = Set-AzVMOperatingSystem -VM $vmConfig -Windows -ComputerName $vmName -Credential $cred
+        # Create a Network Interface for the VM using the single NSG
+        $nic = New-AzNetworkInterface -Name "$vmName-nic" -ResourceGroupName $resourceGroup -Location $location -SubnetId $subnet.Id -PublicIpAddressId $pip.Id -NetworkSecurityGroupId $nsg.Id
 
-    # Create the VM
-    $vm = New-AzVM -ResourceGroupName $resourceGroup -Location $location -VM $vmConfig -Verbose
+        # Configure the VM using the gallery image
+        $vmConfig = New-AzVMConfig -VMName $vmName -VMSize $sku |
+            Set-AzVMSourceImage -Id $imageId |
+            Add-AzVMNetworkInterface -Id $nic.Id
+
+        # Set the operating system configuration
+        $vmConfig = Set-AzVMOperatingSystem -VM $vmConfig -Windows -ComputerName $vmName -Credential $cred
+
+        # Create the VM
+        $vm = New-AzVM -ResourceGroupName $resourceGroup -Location $location -VM $vmConfig -Verbose
+
+    } -ArgumentList $i, $vmPrefix, $resourceGroup, $location, $subnet, $nsg, $sku, $imageId, $cred
 }
+
+# Optional: Wait for all jobs to complete
+Get-Job | Wait-Job
+Get-Job | Receive-Job | Out-Output
+
+# Clean up jobs
+Get-Job | Remove-Job
