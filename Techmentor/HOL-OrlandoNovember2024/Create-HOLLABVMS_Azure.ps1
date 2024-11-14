@@ -6,7 +6,7 @@
 # Created by Dave Kawula - MVP
 $resourceGroup = "TMHOLMIGSRV2025"
 $location = "Canada Central" 
-$imageId = "/subscriptions/3bc59d7d-b822-4d55-bc1d-24c95ad5d3a5/resourceGroups/<ResourceGroup>/providers/Microsoft.Compute/galleries/HoLGallery/images/TechmentorOrlando2024-HOL3/versions/2.0.0"
+$imageId = "/subscriptions/<InsertSUB>/resourceGroups/<ResourceGroup>/providers/Microsoft.Compute/galleries/HoLGallery/images/TechmentorOrlando2024-HOL3/versions/2.0.0"
 $sku = "Standard_D8s_v3" 
 $vmPrefix = "Student"
 $vnetName = "TMLABVNET04"
