@@ -956,7 +956,7 @@ Safe-Run -Name "SystemProfile reg (power throttling hints)" -WarnOnly -Script {
 
 # --- Diagnostic Data Viewer module bootstrap (hardened) ---
 # Requires $ddv already set to your Section 10 output folder, e.g.:
-#   $ddv = Join-Path $root '10_DiagnosticDataViewer'
+   $ddv = Join-Path $root '10_DiagnosticDataViewer'
 if (-not (Test-Path $ddv)) { New-Item -ItemType Directory -Path $ddv -Force | Out-Null }
 
 # 1) Ensure CurrentUser module path exists (avoids DirectoryNotFoundException)
