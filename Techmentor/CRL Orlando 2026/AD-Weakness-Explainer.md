@@ -409,20 +409,20 @@ checkbox.
   Credential Guard), short ticket lifetimes, and MDI's PtT detection.
 
 - **Silver Ticket.** If the attacker has a *service account's* key (e.g. from
-  Kerberoasting §1), they can **forge a service ticket** for that one service
+  Kerberoasting), they can **forge a service ticket** for that one service
   directly, bypassing the DC entirely — quiet, because the DC never sees the
-  request. Closing §1 (strong service-account keys / gMSA) removes the key
+  request. Closing the Kerberoasting gap (strong service-account keys / gMSA) removes the key
   that makes a silver ticket possible.
 
 - **Golden Ticket.** If the attacker has the **`krbtgt`** account's key (e.g.
-  from DCSync §8), they can forge a TGT for *anyone, any group, with any
-  lifetime* — effectively a skeleton key to the whole domain. This is why §8
-  (DCSync) is the crown-jewels detection, and why incident response for a
+  from DCSync), they can forge a TGT for *anyone, any group, with any
+  lifetime* — effectively a skeleton key to the whole domain. This is why
+  DCSync is the crown-jewels detection, and why incident response for a
   suspected DC compromise includes **rotating `krbtgt` twice**. MDI raises
   **"Suspected Golden Ticket usage"** on the anomalous ticket characteristics.
 
 The teaching point lands here: **you don't defend these four by chasing the
-tickets — you defend them by closing §1–§9 so the attacker never gets the key
+tickets — you defend them by closing the nine weaknesses above so the attacker never gets the key
 in the first place, and by instrumenting MDI so that if they do, the forged
 ticket's own oddities give them away.**
 
