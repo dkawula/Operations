@@ -1,0 +1,18 @@
+// 01: Endpoint telemetry coverage
+// DEFENDER XDR ADVANCED HUNTING
+// Requires: MDE tables listed in this query
+// Historical lab window: adjust for replay. Run this file alone.
+// Local static validation is not portal execution. See Query-Guide.md.
+let StartUtc = datetime(2026-11-11T15:00:00Z);
+let EndUtc = datetime(2026-11-13T00:00:00Z);
+union withsource=TableName
+ (DeviceProcessEvents | where Timestamp between (StartUtc .. EndUtc) | project Timestamp, DeviceName),
+ (DeviceNetworkEvents | where Timestamp between (StartUtc .. EndUtc) | project Timestamp, DeviceName),
+ (DeviceFileEvents | where Timestamp between (StartUtc .. EndUtc) | project Timestamp, DeviceName),
+ (DeviceRegistryEvents | where Timestamp between (StartUtc .. EndUtc) | project Timestamp, DeviceName),
+ (DeviceLogonEvents | where Timestamp between (StartUtc .. EndUtc) | project Timestamp, DeviceName),
+ (DeviceEvents | where Timestamp between (StartUtc .. EndUtc) | project Timestamp, DeviceName)
+| extend ShortDevice = tolower(tostring(split(DeviceName, ".")[0]))
+| where ShortDevice in ("win11", "win11b", "dc01", "srv01")
+| summarize Events=count(), FirstSeen=min(Timestamp), LastSeen=max(Timestamp) by TableName, DeviceName
+| order by DeviceName asc, TableName asc

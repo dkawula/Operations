@@ -1,0 +1,15 @@
+// 53: Known successful twin process marker
+// DEFENDER XDR ADVANCED HUNTING
+// Requires: MDE DeviceProcessEvents
+// Historical lab window: adjust for replay. Run this file alone.
+// Local static validation is not portal execution. See Query-Guide.md.
+let StartUtc = datetime(2026-11-11T22:00:00Z);
+let EndUtc = datetime(2026-11-11T22:20:00Z);
+let Marker = "DefXDRWorkshop-20261111-Twin01";
+DeviceProcessEvents
+| where Timestamp between (StartUtc .. EndUtc)
+| extend ShortDevice=tolower(tostring(split(DeviceName,".")[0]))
+| where ShortDevice in ("win11","win11b")
+| where ProcessCommandLine contains Marker
+| project Timestamp, DeviceName, FileName, ProcessCommandLine, AccountName, InitiatingProcessFileName, ReportId
+| order by Timestamp asc

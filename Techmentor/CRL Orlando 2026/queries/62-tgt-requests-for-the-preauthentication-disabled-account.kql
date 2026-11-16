@@ -1,0 +1,15 @@
+// 62: TGT requests for the preauthentication-disabled account
+// OPTIONAL SENTINEL / SECURITYEVENT
+// Requires: SecurityEvent 4768 on DC01; Audit Kerberos Authentication Service
+// Historical lab window: adjust for replay. Run this file alone.
+// Local static validation is not portal execution. See Query-Guide.md.
+let StartUtc = datetime(2026-11-11T15:00:00Z);
+let EndUtc = datetime(2026-11-13T00:00:00Z);
+SecurityEvent
+| where TimeGenerated between (StartUtc .. EndUtc)
+| extend ShortComputer=tolower(tostring(split(Computer,".")[0]))
+| where ShortComputer == "dc01" and EventID == 4768
+| extend ClientIP=coalesce(tostring(column_ifexists("IpAddress","")),extract('<Data Name="IpAddress">([^<]*)</Data>',1,EventData)), RequestedAccount=coalesce(tostring(column_ifexists("TargetUserName","")),extract('<Data Name="TargetUserName">([^<]*)</Data>',1,EventData)), PreAuthType=coalesce(tostring(column_ifexists("PreAuthType","")),extract('<Data Name="PreAuthType">([^<]*)</Data>',1,EventData)), ResultCode=coalesce(tostring(column_ifexists("Status","")),extract('<Data Name="Status">([^<]*)</Data>',1,EventData)), EncryptionType=coalesce(tostring(column_ifexists("TicketEncryptionType","")),extract('<Data Name="TicketEncryptionType">([^<]*)</Data>',1,EventData))
+| where RequestedAccount =~ "jsmith.preauth" or RequestedAccount =~ "jsmith.preauth@lab.local" or replace_string(ClientIP,"::ffff:","") == "192.168.57.5"
+| project TimeGenerated, Computer, RequestedAccount, ClientIP, PreAuthType, ResultCode, EncryptionType, EventData
+| order by TimeGenerated asc

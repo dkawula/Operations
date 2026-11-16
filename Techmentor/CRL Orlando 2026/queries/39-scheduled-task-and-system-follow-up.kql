@@ -1,0 +1,15 @@
+// 39: Scheduled-task and SYSTEM follow-up
+// DEFENDER XDR ADVANCED HUNTING
+// Requires: MDE DeviceProcessEvents
+// Historical lab window: adjust for replay. Run this file alone.
+// Local static validation is not portal execution. See Query-Guide.md.
+let StartUtc = datetime(2026-11-11T15:00:00Z);
+let EndUtc = datetime(2026-11-13T00:00:00Z);
+DeviceProcessEvents
+| where Timestamp between (StartUtc .. EndUtc)
+| extend ShortDevice = tolower(tostring(split(DeviceName, ".")[0]))
+| where ShortDevice in ("win11", "win11b", "dc01", "srv01")
+| where FileName =~ "schtasks.exe" or ProcessCommandLine contains "Register-ScheduledTask"
+    or (AccountSid == "S-1-5-18" and (FolderPath startswith @"C:\tools" or ProcessCommandLine contains "DefXDRWorkshop"))
+| project Timestamp, DeviceName, AccountName, AccountSid, FileName, FolderPath, ProcessCommandLine, ProcessTokenElevation, InitiatingProcessFileName
+| order by Timestamp asc

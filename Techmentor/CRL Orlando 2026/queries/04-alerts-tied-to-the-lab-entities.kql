@@ -1,0 +1,21 @@
+// 04: Alerts tied to the lab entities
+// DEFENDER XDR ADVANCED HUNTING
+// Requires: AlertInfo + AlertEvidence
+// Historical lab window: adjust for replay. Run this file alone.
+// Local static validation is not portal execution. See Query-Guide.md.
+let StartUtc = datetime(2026-11-11T15:00:00Z);
+let EndUtc = datetime(2026-11-13T00:00:00Z);
+let KaliIP = "192.168.57.5";
+let LabAlerts = AlertEvidence
+| where Timestamp between (StartUtc .. (EndUtc + 1d))
+| extend ShortDevice=tolower(tostring(split(DeviceName, ".")[0]))
+| where ShortDevice in ("win11","win11b","dc01","srv01")
+    or RemoteIP == KaliIP or LocalIP == KaliIP
+    or AccountDomain in~ ("LAB", "lab.local") or AccountUpn endswith "@lab.local"
+| summarize Devices=make_set(DeviceName, 50), Accounts=make_set(AccountName, 50), IPs=make_set(RemoteIP, 50), Files=make_set(FileName, 50) by AlertId;
+AlertInfo
+| where Timestamp between (StartUtc .. (EndUtc + 1d))
+| summarize arg_max(Timestamp, *) by AlertId
+| join kind=inner LabAlerts on AlertId
+| project Timestamp, AlertId, Title, Severity, Category, ServiceSource, DetectionSource, AttackTechniques, Devices, Accounts, IPs, Files
+| order by Timestamp asc

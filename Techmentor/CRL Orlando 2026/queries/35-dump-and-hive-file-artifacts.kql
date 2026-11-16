@@ -1,0 +1,14 @@
+// 35: Dump and hive file artifacts
+// DEFENDER XDR ADVANCED HUNTING
+// Requires: MDE DeviceFileEvents
+// Historical lab window: adjust for replay. Run this file alone.
+// Local static validation is not portal execution. See Query-Guide.md.
+let StartUtc = datetime(2026-11-11T15:00:00Z);
+let EndUtc = datetime(2026-11-13T00:00:00Z);
+DeviceFileEvents
+| where Timestamp between (StartUtc .. EndUtc)
+| extend ShortDevice = tolower(tostring(split(DeviceName, ".")[0]))
+| where ShortDevice in ("win11", "win11b", "dc01", "srv01")
+| where FileName endswith ".dmp" or FileName endswith ".hiv" or FileName in~ ("ls.bin","lsass.bin","system.hiv","sam.hiv","security.hiv")
+| project Timestamp, DeviceName, ActionType, FileName, FolderPath, FileSize, SHA1, InitiatingProcessFileName, InitiatingProcessCommandLine, InitiatingProcessAccountName
+| order by Timestamp asc

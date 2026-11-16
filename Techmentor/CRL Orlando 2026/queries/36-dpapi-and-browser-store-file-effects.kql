@@ -1,0 +1,15 @@
+// 36: DPAPI and browser-store file effects
+// DEFENDER XDR ADVANCED HUNTING
+// Requires: MDE DeviceFileEvents
+// Historical lab window: adjust for replay. Run this file alone.
+// Local static validation is not portal execution. See Query-Guide.md.
+let StartUtc = datetime(2026-11-11T15:00:00Z);
+let EndUtc = datetime(2026-11-13T00:00:00Z);
+DeviceFileEvents
+| where Timestamp between (StartUtc .. EndUtc)
+| where DeviceName =~ "WIN11B" or DeviceName startswith "WIN11B."
+| where FileName in~ ("Login Data","Local State","Cookies","Web Data")
+    or FolderPath contains @"Microsoft\Protect" or FolderPath contains @"Microsoft\Credentials"
+    or FolderPath contains @"Microsoft\Vault"
+| project Timestamp, DeviceName, ActionType, FileName, FolderPath, InitiatingProcessFileName, InitiatingProcessCommandLine, InitiatingProcessAccountName
+| order by Timestamp asc

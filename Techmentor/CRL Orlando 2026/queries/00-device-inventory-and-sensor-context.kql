@@ -1,0 +1,14 @@
+// 00: Device inventory and sensor context
+// DEFENDER XDR ADVANCED HUNTING
+// Requires: DeviceInfo / device visibility
+// Historical lab window: adjust for replay. Run this file alone.
+// Local static validation is not portal execution. See Query-Guide.md.
+let StartUtc = datetime(2026-11-11T15:00:00Z);
+let EndUtc = datetime(2026-11-13T00:00:00Z);
+DeviceInfo
+| where Timestamp between (StartUtc .. EndUtc)
+| extend ShortDevice = tolower(tostring(split(DeviceName, ".")[0]))
+| where ShortDevice in ("win11", "win11b", "dc01", "srv01")
+| summarize arg_max(Timestamp, *) by DeviceId
+| project Timestamp, DeviceId, DeviceName, OSPlatform, OnboardingStatus, SensorHealthState, MachineGroup
+| order by DeviceName asc

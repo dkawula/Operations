@@ -1,0 +1,12 @@
+// 21: AS-REP target account timeline
+// DEFENDER XDR ADVANCED HUNTING
+// Requires: MDI IdentityLogonEvents
+// Historical lab window: adjust for replay. Run this file alone.
+// Local static validation is not portal execution. See Query-Guide.md.
+let StartUtc = datetime(2026-11-11T15:00:00Z);
+let EndUtc = datetime(2026-11-13T00:00:00Z);
+IdentityLogonEvents
+| where Timestamp between (StartUtc .. EndUtc)
+| where AccountName =~ "jsmith.preauth" or AccountUpn =~ "jsmith.preauth@lab.local"
+| project Timestamp, ActionType, AccountName, AccountDomain, IPAddress, DestinationDeviceName, Protocol, LogonType, FailureReason, AdditionalFields
+| order by Timestamp asc

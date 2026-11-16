@@ -1,0 +1,27 @@
+# --- Local run state & secrets (never commit) ---
+.defxdrlab/
+config.json
+config-2.json
+*.secret
+*.pfx
+*.pem
+
+# --- Transcript & run logs ---
+logs/
+*.log
+hunt-results/
+
+# --- Operator-supplied CIS benchmark content (licensed; keep out of the repo) ---
+CIS-GPOs/
+*-CIS-*.zip
+
+# --- Scratch / backups / editor noise ---
+*.bak
+*.bak-*
+*~
+~$*
+.DS_Store
+Thumbs.db
+
+# --- Build/export artifacts ---
+*.zip

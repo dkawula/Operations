@@ -1,0 +1,13 @@
+// 32: Directory activity and account changes
+// DEFENDER XDR ADVANCED HUNTING
+// Requires: MDI IdentityDirectoryEvents
+// Historical lab window: adjust for replay. Run this file alone.
+// Local static validation is not portal execution. See Query-Guide.md.
+let StartUtc = datetime(2026-11-11T15:00:00Z);
+let EndUtc = datetime(2026-11-13T00:00:00Z);
+let KaliIP = "192.168.57.5";
+IdentityDirectoryEvents
+| where Timestamp between (StartUtc .. EndUtc)
+| where replace_string(IPAddress, "::ffff:", "") == KaliIP or AccountDomain in~ ("LAB","lab.local")
+| project Timestamp, ActionType, AccountDomain, AccountName, AccountSid, IPAddress, DestinationDeviceName, TargetAccountUpn, TargetDeviceName, AdditionalFields
+| order by Timestamp asc

@@ -1,0 +1,18 @@
+// 54: Twin comparison with explicit zero rows
+// DEFENDER XDR ADVANCED HUNTING
+// Requires: MDE DeviceProcessEvents
+// Historical lab window: adjust for replay. Run this file alone.
+// Local static validation is not portal execution. See Query-Guide.md.
+let StartUtc = datetime(2026-11-11T22:00:00Z);
+let EndUtc = datetime(2026-11-11T22:20:00Z);
+let Marker = "DefXDRWorkshop-20261111-Twin01";
+let Expected=datatable(ShortDevice:string)["win11","win11b"];
+let Observed=DeviceProcessEvents
+| where Timestamp between (StartUtc .. EndUtc)
+| extend ShortDevice=tolower(tostring(split(DeviceName,".")[0]))
+| where ShortDevice in ("win11","win11b") and ProcessCommandLine contains Marker
+| summarize Events=count(), FirstSeen=min(Timestamp), LastSeen=max(Timestamp) by ShortDevice;
+Expected
+| join kind=leftouter Observed on ShortDevice
+| project ShortDevice, Events=coalesce(Events,tolong(0)), FirstSeen, LastSeen
+| order by ShortDevice asc

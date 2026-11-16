@@ -1,0 +1,15 @@
+// 50: Endpoint connections to the Kali operator
+// DEFENDER XDR ADVANCED HUNTING
+// Requires: MDE DeviceNetworkEvents
+// Historical lab window: adjust for replay. Run this file alone.
+// Local static validation is not portal execution. See Query-Guide.md.
+let StartUtc = datetime(2026-11-11T15:00:00Z);
+let EndUtc = datetime(2026-11-13T00:00:00Z);
+let KaliIP = "192.168.57.5";
+DeviceNetworkEvents
+| where Timestamp between (StartUtc .. EndUtc)
+| extend ShortDevice = tolower(tostring(split(DeviceName, ".")[0]))
+| where ShortDevice in ("win11", "win11b", "dc01", "srv01")
+| where replace_string(RemoteIP, "::ffff:", "") == KaliIP
+| project Timestamp, DeviceId, DeviceName, ActionType, RemoteIP, RemotePort, LocalIP, LocalPort, RemoteUrl, InitiatingProcessFileName, InitiatingProcessFolderPath, InitiatingProcessCommandLine, InitiatingProcessId, InitiatingProcessCreationTime, InitiatingProcessAccountName, InitiatingProcessSHA1
+| order by Timestamp asc

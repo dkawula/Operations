@@ -1,0 +1,15 @@
+// 61: TGS requests including AES Kerberoasting
+// OPTIONAL SENTINEL / SECURITYEVENT
+// Requires: SecurityEvent 4769 on DC01; Audit Kerberos Service Ticket Operations
+// Historical lab window: adjust for replay. Run this file alone.
+// Local static validation is not portal execution. See Query-Guide.md.
+let StartUtc = datetime(2026-11-11T15:00:00Z);
+let EndUtc = datetime(2026-11-13T00:00:00Z);
+SecurityEvent
+| where TimeGenerated between (StartUtc .. EndUtc)
+| extend ShortComputer=tolower(tostring(split(Computer,".")[0]))
+| where ShortComputer == "dc01" and EventID == 4769
+| extend ClientIP=coalesce(tostring(column_ifexists("IpAddress","")),extract('<Data Name="IpAddress">([^<]*)</Data>',1,EventData)), RequestingAccount=coalesce(tostring(column_ifexists("TargetUserName","")),extract('<Data Name="TargetUserName">([^<]*)</Data>',1,EventData)), RequestedService=coalesce(tostring(column_ifexists("ServiceName","")),extract('<Data Name="ServiceName">([^<]*)</Data>',1,EventData)), EncryptionType=coalesce(tostring(column_ifexists("TicketEncryptionType","")),extract('<Data Name="TicketEncryptionType">([^<]*)</Data>',1,EventData)), ResultCode=coalesce(tostring(column_ifexists("Status","")),extract('<Data Name="Status">([^<]*)</Data>',1,EventData))
+| where replace_string(ClientIP,"::ffff:","") == "192.168.57.5" or RequestedService in~ ("svc-sql","svc-web","svc-backup","svc-app")
+| project TimeGenerated, Computer, RequestingAccount, RequestedService, ClientIP, EncryptionType, ResultCode, EventData
+| order by TimeGenerated asc

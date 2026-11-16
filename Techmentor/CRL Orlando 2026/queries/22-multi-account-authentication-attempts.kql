@@ -1,0 +1,13 @@
+// 22: Multi-account authentication attempts
+// DEFENDER XDR ADVANCED HUNTING
+// Requires: MDI IdentityLogonEvents
+// Historical lab window: adjust for replay. Run this file alone.
+// Local static validation is not portal execution. See Query-Guide.md.
+let StartUtc = datetime(2026-11-11T15:00:00Z);
+let EndUtc = datetime(2026-11-13T00:00:00Z);
+let KaliIP = "192.168.57.5";
+IdentityLogonEvents
+| where Timestamp between (StartUtc .. EndUtc)
+| where replace_string(IPAddress, "::ffff:", "") == KaliIP
+| summarize Events=count(), AccountCount=dcount(AccountName), Accounts=make_set(AccountName,100), Failures=make_set(FailureReason,30), Destinations=make_set(DestinationDeviceName,30) by bin(Timestamp,5m), ActionType, Protocol
+| order by Timestamp asc

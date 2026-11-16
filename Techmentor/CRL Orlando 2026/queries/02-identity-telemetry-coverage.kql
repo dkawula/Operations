@@ -1,0 +1,15 @@
+// 02: Identity telemetry coverage
+// DEFENDER XDR ADVANCED HUNTING
+// Requires: MDI: IdentityLogonEvents, IdentityQueryEvents, IdentityDirectoryEvents
+// Historical lab window: adjust for replay. Run this file alone.
+// Local static validation is not portal execution. See Query-Guide.md.
+let StartUtc = datetime(2026-11-11T15:00:00Z);
+let EndUtc = datetime(2026-11-13T00:00:00Z);
+let KaliIP = "192.168.57.5";
+union withsource=TableName
+ (IdentityLogonEvents | where Timestamp between (StartUtc .. EndUtc) | project Timestamp, IPAddress),
+ (IdentityQueryEvents | where Timestamp between (StartUtc .. EndUtc) | project Timestamp, IPAddress),
+ (IdentityDirectoryEvents | where Timestamp between (StartUtc .. EndUtc) | project Timestamp, IPAddress)
+| extend SourceIP = replace_string(IPAddress, "::ffff:", "")
+| summarize Events=count(), LabSourceRows=countif(SourceIP == KaliIP), FirstSeen=min(Timestamp), LastSeen=max(Timestamp) by TableName
+| order by TableName asc

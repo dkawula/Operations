@@ -1,0 +1,22 @@
+// 51: Children of processes that contacted Kali
+// DEFENDER XDR ADVANCED HUNTING
+// Requires: MDE DeviceNetworkEvents + DeviceProcessEvents
+// Historical lab window: adjust for replay. Run this file alone.
+// Local static validation is not portal execution. See Query-Guide.md.
+let StartUtc = datetime(2026-11-11T15:00:00Z);
+let EndUtc = datetime(2026-11-13T00:00:00Z);
+let KaliIP = "192.168.57.5";
+let Parents = DeviceNetworkEvents
+| where Timestamp between (StartUtc .. EndUtc)
+| extend ShortDevice = tolower(tostring(split(DeviceName, ".")[0]))
+| where ShortDevice in ("win11", "win11b", "dc01", "srv01")
+| where replace_string(RemoteIP, "::ffff:", "") == KaliIP
+| summarize FirstKaliContact=min(Timestamp), LastKaliContact=max(Timestamp), Ports=make_set(RemotePort,30) by DeviceId, ParentPid=InitiatingProcessId, ParentStart=InitiatingProcessCreationTime;
+DeviceProcessEvents
+| where Timestamp between (StartUtc .. EndUtc)
+| extend ShortDevice = tolower(tostring(split(DeviceName, ".")[0]))
+| where ShortDevice in ("win11", "win11b", "dc01", "srv01")
+| extend ParentPid=InitiatingProcessId, ParentStart=InitiatingProcessCreationTime
+| join kind=inner Parents on DeviceId, ParentPid, ParentStart
+| project Timestamp, DeviceName, AccountName, FileName, ProcessCommandLine, InitiatingProcessFileName, ParentPid, ParentStart, FirstKaliContact, LastKaliContact, Ports
+| order by Timestamp asc

@@ -1,0 +1,16 @@
+// 38: Security-control events and prevention
+// DEFENDER XDR ADVANCED HUNTING
+// Requires: MDE DeviceEvents
+// Historical lab window: adjust for replay. Run this file alone.
+// Local static validation is not portal execution. See Query-Guide.md.
+let StartUtc = datetime(2026-11-11T15:00:00Z);
+let EndUtc = datetime(2026-11-13T00:00:00Z);
+DeviceEvents
+| where Timestamp between (StartUtc .. EndUtc)
+| extend ShortDevice = tolower(tostring(split(DeviceName, ".")[0]))
+| where ShortDevice in ("win11", "win11b", "dc01", "srv01")
+| where ActionType startswith "Asr" or ActionType contains "Antivirus" or ActionType contains "Tamper"
+    or ActionType contains "ExploitGuard" or ActionType contains "Lsass" or ActionType contains "Defender"
+    or tostring(AdditionalFields) contains "lsass" or tostring(AdditionalFields) contains "procdump"
+| project Timestamp, DeviceName, ActionType, FileName, FolderPath, InitiatingProcessFileName, InitiatingProcessCommandLine, AdditionalFields
+| order by Timestamp asc

@@ -1,0 +1,16 @@
+// 52: Lab file delivery and tool-directory activity
+// DEFENDER XDR ADVANCED HUNTING
+// Requires: MDE DeviceFileEvents
+// Historical lab window: adjust for replay. Run this file alone.
+// Local static validation is not portal execution. See Query-Guide.md.
+let StartUtc = datetime(2026-11-11T15:00:00Z);
+let EndUtc = datetime(2026-11-13T00:00:00Z);
+let KaliIP = "192.168.57.5";
+DeviceFileEvents
+| where Timestamp between (StartUtc .. EndUtc)
+| extend ShortDevice = tolower(tostring(split(DeviceName, ".")[0]))
+| where ShortDevice in ("win11", "win11b", "dc01", "srv01")
+| where FileOriginIP == KaliIP or FileOriginUrl contains KaliIP
+    or FolderPath startswith @"C:\tools" or FileName startswith "DefXDRWorkshop-"
+| project Timestamp, DeviceName, ActionType, FileName, FolderPath, FileSize, FileOriginIP, FileOriginUrl, SHA1, InitiatingProcessFileName, InitiatingProcessCommandLine
+| order by Timestamp asc

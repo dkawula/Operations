@@ -1,0 +1,14 @@
+// 12: Windows discovery children
+// DEFENDER XDR ADVANCED HUNTING
+// Requires: MDE DeviceProcessEvents
+// Historical lab window: adjust for replay. Run this file alone.
+// Local static validation is not portal execution. See Query-Guide.md.
+let StartUtc = datetime(2026-11-11T15:00:00Z);
+let EndUtc = datetime(2026-11-13T00:00:00Z);
+DeviceProcessEvents
+| where Timestamp between (StartUtc .. EndUtc)
+| extend ShortDevice = tolower(tostring(split(DeviceName, ".")[0]))
+| where ShortDevice in ("win11", "win11b", "dc01", "srv01")
+| where FileName in~ ("whoami.exe","hostname.exe","ipconfig.exe","nltest.exe","net.exe","net1.exe","quser.exe","qwinsta.exe")
+| project Timestamp, DeviceName, AccountName, FileName, ProcessCommandLine, ProcessId, ProcessTokenElevation, ProcessIntegrityLevel, InitiatingProcessFileName, InitiatingProcessCommandLine
+| order by Timestamp asc

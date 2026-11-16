@@ -1,0 +1,15 @@
+// 31: WinRM and WMI process execution
+// DEFENDER XDR ADVANCED HUNTING
+// Requires: MDE DeviceProcessEvents
+// Historical lab window: adjust for replay. Run this file alone.
+// Local static validation is not portal execution. See Query-Guide.md.
+let StartUtc = datetime(2026-11-11T15:00:00Z);
+let EndUtc = datetime(2026-11-13T00:00:00Z);
+DeviceProcessEvents
+| where Timestamp between (StartUtc .. EndUtc)
+| extend ShortDevice = tolower(tostring(split(DeviceName, ".")[0]))
+| where ShortDevice in ("win11", "win11b", "dc01", "srv01")
+| where InitiatingProcessFileName in~ ("wsmprovhost.exe","wmiprvse.exe")
+    or FileName in~ ("wsmprovhost.exe","psexesvc.exe","remcomsvc.exe")
+| project Timestamp, DeviceName, AccountDomain, AccountName, FileName, ProcessCommandLine, ProcessId, ProcessCreationTime, ProcessTokenElevation, InitiatingProcessFileName, InitiatingProcessCommandLine
+| order by Timestamp asc

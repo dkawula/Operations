@@ -1,0 +1,18 @@
+// 37: LSA, Defender and RemoteRegistry changes
+// DEFENDER XDR ADVANCED HUNTING
+// Requires: MDE DeviceRegistryEvents
+// Historical lab window: adjust for replay. Run this file alone.
+// Local static validation is not portal execution. See Query-Guide.md.
+let StartUtc = datetime(2026-11-11T15:00:00Z);
+let EndUtc = datetime(2026-11-13T00:00:00Z);
+DeviceRegistryEvents
+| where Timestamp between (StartUtc .. EndUtc)
+| extend ShortDevice = tolower(tostring(split(DeviceName, ".")[0]))
+| where ShortDevice in ("win11", "win11b", "dc01", "srv01")
+| where (RegistryKey contains @"Control\Lsa" and RegistryValueName in~ ("RunAsPPL","RunAsPPLBoot","LsaCfgFlags"))
+    or RegistryKey contains @"Services\RemoteRegistry"
+    or RegistryKey contains @"Windows Defender\Real-Time Protection"
+    or RegistryKey contains @"Windows Defender\Exclusions"
+    or RegistryKey contains @"Windows Defender\Features"
+| project Timestamp, DeviceName, ActionType, RegistryKey, RegistryValueName, PreviousRegistryValueData, RegistryValueData, InitiatingProcessFileName, InitiatingProcessCommandLine, InitiatingProcessAccountName
+| order by Timestamp asc

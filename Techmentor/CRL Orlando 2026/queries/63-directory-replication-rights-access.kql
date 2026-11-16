@@ -1,0 +1,20 @@
+// 63: Directory replication rights access
+// OPTIONAL SENTINEL / SECURITYEVENT
+// Requires: SecurityEvent 4662; Audit Directory Service Access and matching AD SACL
+// Historical lab window: adjust for replay. Run this file alone.
+// Local static validation is not portal execution. See Query-Guide.md.
+let StartUtc = datetime(2026-11-11T15:00:00Z);
+let EndUtc = datetime(2026-11-13T00:00:00Z);
+SecurityEvent
+| where TimeGenerated between (StartUtc .. EndUtc)
+| extend ShortComputer=tolower(tostring(split(Computer,".")[0]))
+| where ShortComputer == "dc01" and EventID == 4662
+| extend ObjectProperties=coalesce(tostring(column_ifexists("Properties","")),extract('<Data Name="Properties">([^<]*)</Data>',1,EventData)), Actor=coalesce(tostring(column_ifexists("SubjectUserName","")),extract('<Data Name="SubjectUserName">([^<]*)</Data>',1,EventData)), ActorLogonId=coalesce(tostring(column_ifexists("SubjectLogonId","")),extract('<Data Name="SubjectLogonId">([^<]*)</Data>',1,EventData))
+| where ObjectProperties contains "1131f6aa-9c07-11d1-f79f-00c04fc2dcd2"
+    or ObjectProperties contains "1131f6ad-9c07-11d1-f79f-00c04fc2dcd2"
+    or ObjectProperties contains "89e95b76-444d-4c62-991a-0facbeda640c"
+    or EventData contains "1131f6aa-9c07-11d1-f79f-00c04fc2dcd2"
+    or EventData contains "1131f6ad-9c07-11d1-f79f-00c04fc2dcd2"
+    or EventData contains "89e95b76-444d-4c62-991a-0facbeda640c"
+| project TimeGenerated, Computer, Actor, ActorLogonId, AccessMask, ObjectProperties, EventData
+| order by TimeGenerated asc

@@ -1,0 +1,14 @@
+// 60: Raw Security event availability
+// OPTIONAL SENTINEL / SECURITYEVENT
+// Requires: SecurityEvent table; Windows Security log collection
+// Historical lab window: adjust for replay. Run this file alone.
+// Local static validation is not portal execution. See Query-Guide.md.
+let StartUtc = datetime(2026-11-11T15:00:00Z);
+let EndUtc = datetime(2026-11-13T00:00:00Z);
+SecurityEvent
+| where TimeGenerated between (StartUtc .. EndUtc)
+| extend ShortComputer=tolower(tostring(split(Computer,".")[0]))
+| where ShortComputer in ("dc01","win11","win11b","srv01")
+| where EventID in (4624,4625,4662,4688,4698,4702,4719,4768,4769,4771,5145)
+| summarize Events=count(), FirstSeen=min(TimeGenerated), LastSeen=max(TimeGenerated) by Computer, EventID
+| order by Computer asc, EventID asc

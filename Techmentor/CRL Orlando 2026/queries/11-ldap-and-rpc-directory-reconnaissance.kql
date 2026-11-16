@@ -1,0 +1,14 @@
+// 11: LDAP and RPC directory reconnaissance
+// DEFENDER XDR ADVANCED HUNTING
+// Requires: MDI IdentityQueryEvents
+// Historical lab window: adjust for replay. Run this file alone.
+// Local static validation is not portal execution. See Query-Guide.md.
+let StartUtc = datetime(2026-11-11T15:00:00Z);
+let EndUtc = datetime(2026-11-13T00:00:00Z);
+let KaliIP = "192.168.57.5";
+IdentityQueryEvents
+| where Timestamp between (StartUtc .. EndUtc)
+| where replace_string(IPAddress, "::ffff:", "") == KaliIP
+    or (AccountDomain in~ ("LAB","lab.local") and AccountName in~ ("labadmin","labuser","svc-sql","svc-web","jsmith.preauth"))
+| project Timestamp, ActionType, Protocol, AccountDomain, AccountName, IPAddress, DestinationDeviceName, DestinationIPAddress, QueryType, QueryTarget, Query, AdditionalFields
+| order by Timestamp asc

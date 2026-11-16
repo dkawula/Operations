@@ -1,0 +1,13 @@
+// 03: Discover actual DeviceEvents action names
+// DEFENDER XDR ADVANCED HUNTING
+// Requires: MDE DeviceEvents
+// Historical lab window: adjust for replay. Run this file alone.
+// Local static validation is not portal execution. See Query-Guide.md.
+let StartUtc = datetime(2026-11-11T15:00:00Z);
+let EndUtc = datetime(2026-11-13T00:00:00Z);
+DeviceEvents
+| where Timestamp between (StartUtc .. EndUtc)
+| extend ShortDevice = tolower(tostring(split(DeviceName, ".")[0]))
+| where ShortDevice in ("win11", "win11b", "dc01", "srv01")
+| summarize Events=count(), Example=take_any(AdditionalFields), FirstSeen=min(Timestamp), LastSeen=max(Timestamp) by DeviceName, ActionType
+| order by DeviceName asc, Events desc
