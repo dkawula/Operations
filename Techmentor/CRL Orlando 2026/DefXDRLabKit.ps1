@@ -865,8 +865,54 @@ if ($ntds -eq 'Running' -and $adws -eq 'Running') {
     Warn "$Label didn't report ready within $TimeoutMin min. It may still be finishing - re-run Configure, or check it, then seed."
     return $false
 }
+# --- lab admin passwords (random per lab copy, kept OUT of the repo) ---------
+# DSRM + the labadmin-da Domain Admin get a random password per lab copy,
+# generated on first use and saved in %USERPROFILE%\.defxdrlab\secrets-<copy>.json
+# (gitignored, outside the kit folder). The seeded ATTACK-TARGET accounts
+# (labuser, svc-sql, the 11-Weaken-AD set) keep their deliberately weak
+# passwords - weak where the lesson needs it, random everywhere else.
+function New-LabPassword([int]$Length = 20) {
+    # Letters + digits only (3 of the 4 AD complexity classes), so the value
+    # passes through az run-command parameters with no quoting problems.
+    $sets = @('ABCDEFGHJKLMNPQRSTUVWXYZ','abcdefghijkmnopqrstuvwxyz','23456789')
+    $all  = -join $sets
+    $rng  = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+    $next = { param([int]$max) $b = New-Object byte[] 4; $rng.GetBytes($b); [int]([BitConverter]::ToUInt32($b,0) % [uint32]$max) }
+    $c = New-Object System.Collections.Generic.List[char]
+    foreach ($set in $sets) { $c.Add($set[(& $next $set.Length)]) }
+    while ($c.Count -lt $Length) { $c.Add($all[(& $next $all.Length)]) }
+    for ($i = $c.Count - 1; $i -gt 0; $i--) { $j = & $next ($i + 1); $t = $c[$i]; $c[$i] = $c[$j]; $c[$j] = $t }
+    return (-join $c)
+}
+function Get-LabSecretsFile { Join-Path $CFGDIR "secrets-$($script:ActiveLab).json" }
+function Get-LabSecrets([switch]$Regenerate) {
+    $f = Get-LabSecretsFile
+    if (-not $Regenerate -and (Test-Path $f)) {
+        try { $s = Get-Content $f -Raw | ConvertFrom-Json; if ($s.DsrmPassword -and $s.DomainAdminPassword) { return $s } } catch {}
+    }
+    $s = [pscustomobject]@{ DsrmPassword = (New-LabPassword); DomainAdminPassword = (New-LabPassword); Created = (Get-Date -Format s) }
+    New-Item -ItemType Directory -Force -Path $CFGDIR | Out-Null
+    $s | ConvertTo-Json | Set-Content $f
+    Ok "Generated random admin passwords for lab copy $($script:ActiveLab) (DSRM + labadmin-da), saved to $f. Menu 2 -> P copies them."
+    return $s
+}
+function Step-LabSecrets {
+    $s = Get-LabSecrets
+    Narrate "Lab copy $($script:ActiveLab) admin passwords. Random per lab and kept in $(Get-LabSecretsFile) - never in the repo or the run log."
+    Write-Host "    1) Copy the labadmin-da (Domain Admin) password to the clipboard"
+    Write-Host "    2) Copy the DSRM (DC safe-mode) password to the clipboard"
+    Write-Host "    3) Generate NEW passwords (DSRM applies to the next build; labadmin-da after menu 2 -> 1)"
+    Write-Host "    0) Back`n"
+    $c = Read-Host "  Select"
+    switch ($c) {
+        '1' { try { Set-Clipboard -Value $s.DomainAdminPassword; Ok "Copied the password for $($CFG.NetbiosName)\labadmin-da." } catch { Warn "Clipboard unavailable - open $(Get-LabSecretsFile)." } }
+        '2' { try { Set-Clipboard -Value $s.DsrmPassword; Ok "Copied the DSRM password." } catch { Warn "Clipboard unavailable - open $(Get-LabSecretsFile)." } }
+        '3' { if ((Read-Host "  Replace this lab's saved admin passwords? (y/N)") -match '^[Yy]') { Get-LabSecrets -Regenerate | Out-Null; Info "Re-run menu 2 -> 1 to apply the new labadmin-da password on DC01." } }
+    }
+}
 function Step-ConfigureDC {
     $s = Join-Path $HERE 'guest/03-Configure-DomainController.ps1'
+    $sec = Get-LabSecrets
     Write-Host ""
     Narrate "DC01 configuration - 3 phases. Everything below is echoed to the run log."
     Write-Host "    Phase 1/3  Promote DC01 to the $($CFG.DomainName) forest (installs AD DS + DNS)" -ForegroundColor DarkGray
@@ -875,13 +921,13 @@ function Step-ConfigureDC {
     Write-Host ""
 
     Narrate "[Phase 1/3] Promoting DC01 - this installs the roles and starts the forest build."
-    Invoke-OnWindowsVm $CFG.Dc $s @('DomainName',$CFG.DomainName,'NetbiosName',$CFG.NetbiosName,'DcIp',$CFG.DcIp,'Action','Promote')
+    Invoke-OnWindowsVm $CFG.Dc $s @('DomainName',$CFG.DomainName,'NetbiosName',$CFG.NetbiosName,'DcIp',$CFG.DcIp,'Action','Promote','SafeModePassword',$sec.DsrmPassword)
 
     Narrate "[Phase 2/3] DC01 reboots to finish promotion - waiting for it to come back online."
     Warn "This usually takes 3-8 minutes. You'll see a poll line every ~20s below (nothing to press)."
     if (Wait-ForDc) {
         Narrate "[Phase 3/3] DC01 is back - seeding labuser / svc-sql / labadmin-da."
-        Invoke-OnWindowsVm $CFG.Dc $s @('DomainName',$CFG.DomainName,'NetbiosName',$CFG.NetbiosName,'DcIp',$CFG.DcIp,'Action','Seed')
+        Invoke-OnWindowsVm $CFG.Dc $s @('DomainName',$CFG.DomainName,'NetbiosName',$CFG.NetbiosName,'DcIp',$CFG.DcIp,'Action','Seed','DaPassword',$sec.DomainAdminPassword)
         # Readiness report: show the domain + the seeded accounts so Dave sees proof.
         Narrate "Readiness check - confirming the forest and the seeded accounts exist:"
         $report = @'
@@ -912,9 +958,10 @@ foreach ($u in 'labuser','svc-sql','labadmin-da'){
 function Step-JoinTargets {
     Narrate "Pointing both victim PCs at the DC and joining them to the domain."
     $s = Join-Path $HERE 'guest/04-Join-and-Prep-Targets.ps1'
-    Invoke-OnWindowsVm $CFG.Win11  $s @('DomainName',$CFG.DomainName,'DcIp',$CFG.DcIp)
-    Invoke-OnWindowsVm $CFG.Win11b $s @('DomainName',$CFG.DomainName,'DcIp',$CFG.DcIp)
-    if ($CFG.IncludeSrv01){ Invoke-OnWindowsVm 'SRV01' $s @('DomainName',$CFG.DomainName,'DcIp',$CFG.DcIp) }
+    $jp = (Get-LabSecrets).DomainAdminPassword
+    Invoke-OnWindowsVm $CFG.Win11  $s @('DomainName',$CFG.DomainName,'DcIp',$CFG.DcIp,'JoinPassword',$jp)
+    Invoke-OnWindowsVm $CFG.Win11b $s @('DomainName',$CFG.DomainName,'DcIp',$CFG.DcIp,'JoinPassword',$jp)
+    if ($CFG.IncludeSrv01){ Invoke-OnWindowsVm 'SRV01' $s @('DomainName',$CFG.DomainName,'DcIp',$CFG.DcIp,'JoinPassword',$jp) }
 }
 function Step-Verify {
     Narrate "Checking lab readiness on the victim PCs$(if($CFG.IncludeSrv01){' and SRV01'})."
@@ -1999,6 +2046,7 @@ function Menu-Configure {
         Write-Host "    8) Move a box into '$($CFG.HardenedOU)' (then reboot it + re-run the attack)"
         Write-Host "    9) Build the 'Defender Baseline' GPO (ASR + CFA + network protection + recommended AV)" -ForegroundColor Cyan
         Write-Host "    A) Create the CIS-Hardened-Workstations OU (no GPOs linked - you link the CIS policies)" -ForegroundColor Cyan
+        Write-Host "    P) Lab admin passwords (labadmin-da + DSRM, random per lab) - copy to clipboard / regenerate"
         Write-Host "    -- second, isolated copy (deploy it first: menu 1 -> D) --" -ForegroundColor DarkGray
         Write-Host "    B) FINISH COPY 2 ($(Get-Copy2Rg)): start VMs -> DC01 -> join -> verify -> (weaken) -> Hardened OU (7) -> Defender Baseline GPO (9)" -ForegroundColor Cyan
         Write-Host "    0) Back`n"
@@ -2015,6 +2063,7 @@ function Menu-Configure {
             '^8$' { Step-MoveToHardenedOU; Pause }
             '^9$' { Step-DefenderBaselineGpo; Pause }
             '^[Aa]$' { Step-CreateCisOU; Pause }
+            '^[Pp]$' { Step-LabSecrets; Pause }
         }
     } while ($c -notmatch '^0$')
 }

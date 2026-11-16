@@ -78,6 +78,13 @@ depends on the DC.
 
 Both steps are safe to re-run.
 
+**Lab passwords.** The admin accounts (the DC's DSRM password and the
+`labadmin-da` Domain Admin) get a **random password per lab**, generated the first
+time you run menu 2 → 1 and saved in `%USERPROFILE%\.defxdrlab\secrets-<copy>.json`,
+outside the repo. Menu **2 → P** copies them to the clipboard or rotates them. The
+seeded attack-target accounts keep their **deliberately weak** passwords, because
+cracking and spraying them is the lesson.
+
 ### Step 4: Blue-team setup and hunting
 
 Onboarding is automatic: Defender for Cloud and the build-time push install

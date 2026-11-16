@@ -19,7 +19,7 @@ param(
     # resolves.) Fixed Azure platform address, not a secret.
     [string]$AzureDns   = '168.63.129.16',
     [string]$JoinUser   = 'labadmin-da',          # domain account allowed to join
-    [string]$JoinPassword = 'DomainAdmin-2026!'
+    [string]$JoinPassword = ''                   # passed in by the kit (random per lab, menu 2 -> P)
 )
 $ErrorActionPreference = 'Stop'
 function Say($m){ Write-Host "[target] $m" -ForegroundColor Cyan }
@@ -60,6 +60,7 @@ for ($i=0; $i -lt 20; $i++) {
 }
 if (-not $ok) { throw "The DC at $DcIp is not serving $DomainName (no _ldap SRV record). Is DC01 promoted and rebooted? Check Get-Service NTDS,DNS,Netlogon on DC01." }
 
+if (-not $JoinPassword) { throw "No -JoinPassword given. Run this from the kit (menu 2 -> 2), which passes the lab's saved password." }
 Say "Joining $DomainName (machine reboots when done)..."
 $cred = New-Object System.Management.Automation.PSCredential(
     "$DomainName\$JoinUser",

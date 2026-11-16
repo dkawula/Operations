@@ -32,8 +32,11 @@ param(
     # can't answer here, so the DC (and the whole domain) still resolves the
     # internet. This is a fixed Azure platform address, not a secret.
     [string]$AzureDns = '168.63.129.16',
-    # Safe-mode / DSRM password for the DC.
-    [string]$SafeModePassword = 'Lab-DSRM-Pass-2026!'
+    # Safe-mode / DSRM password for the DC, and the labadmin-da Domain Admin
+    # password. No defaults: the kit generates random ones per lab
+    # (menu 2 -> P) and passes them in.
+    [string]$SafeModePassword = '',
+    [string]$DaPassword = ''
 )
 $ErrorActionPreference = 'Stop'
 function Say($m){ Write-Host "[dc01] $m" -ForegroundColor Cyan }
@@ -47,6 +50,7 @@ function Invoke-Promote {
     Install-WindowsFeature AD-Domain-Services,DNS -IncludeManagementTools | Out-Null
     Say "Promoting to a new forest: $DomainName ($NetbiosName). The machine reboots when done."
     Import-Module ADDSDeployment
+    if (-not $SafeModePassword) { throw "No -SafeModePassword given. Run this from the kit (menu 2 -> 1), which generates one per lab." }
     $sm = ConvertTo-SecureString $SafeModePassword -AsPlainText -Force
     Install-ADDSForest -DomainName $DomainName -DomainNetbiosName $NetbiosName `
         -InstallDns -SafeModeAdministratorPassword $sm -Force -NoRebootOnCompletion:$false
@@ -80,9 +84,14 @@ function Invoke-Seed {
     }
 
     # Optional: a second admin for lateral-movement/DCSync demos.
-    if (-not (Get-ADUser -Filter "SamAccountName -eq 'labadmin-da'")) {
+    if (-not $DaPassword) { throw "No -DaPassword given. Run this from the kit (menu 2 -> 1), which generates one per lab." }
+    if (Get-ADUser -Filter "SamAccountName -eq 'labadmin-da'") {
+        # Keep the account in step with the kit's saved password for this lab.
+        Set-ADAccountPassword -Identity 'labadmin-da' -Reset -NewPassword (ConvertTo-SecureString $DaPassword -AsPlainText -Force)
+        Say "  labadmin-da exists - password synced to this lab's saved value"
+    } else {
         New-ADUser -Name 'labadmin-da' -SamAccountName 'labadmin-da' `
-            -AccountPassword (ConvertTo-SecureString 'DomainAdmin-2026!' -AsPlainText -Force) `
+            -AccountPassword (ConvertTo-SecureString $DaPassword -AsPlainText -Force) `
             -Enabled $true -PasswordNeverExpires $true
         Add-ADGroupMember -Identity 'Domain Admins' -Members 'labadmin-da'
         Say "  created labadmin-da (Domain Admin, for the DCSync/lateral-movement labs)"

@@ -255,8 +255,9 @@ az vm list-ip-addresses -g $ResourceGroup -o table
 
 Say ""
 Say "NEXT STEPS (in-guest config):"
-Say "  1. RDP to DC01 ($IpDC01) and run guest/03-Configure-DomainController.ps1 -DomainName $DomainName"
-Say "  2. RDP to WIN11/WIN11B/SRV01 and run guest/04-Join-and-Prep-Targets.ps1 -DomainName $DomainName -DcIp $IpDC01"
+Say "  (Easiest: DefXDRLabKit menu 2 -> 1 and 2 -> 2 do steps 1-2 for you and pass the lab's random admin passwords.)"
+Say "  1. RDP to DC01 ($IpDC01) and run guest/03-Configure-DomainController.ps1 -DomainName $DomainName -SafeModePassword <pw> -DaPassword <pw>"
+Say "  2. RDP to WIN11/WIN11B/SRV01 and run guest/04-Join-and-Prep-Targets.ps1 -DomainName $DomainName -DcIp $IpDC01 -JoinPassword <labadmin-da pw>"
 Say "  3. Onboard Defender on WIN11 ONLY:  guest/05-Onboard-Defender.ps1 (WIN11B stays stock AV for the comparison)"
 Say "  4. Harden WIN11 (CFA/network protection): guest/07-Harden-TamperProtection-CFA.ps1   (ASR is shown manually via GPO/Intune)"
 Say "  5. KALI ($IpKali): SSH in (framework menu 3) and install your own C2 (e.g. Sliver) by hand."
