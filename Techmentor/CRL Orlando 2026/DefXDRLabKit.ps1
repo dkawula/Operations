@@ -42,7 +42,7 @@
 param(
     [ValidateSet('Menu','Prereqs','AzLogin','Configure','Deploy','Start','Stop','Status','Destroy','AutoShutdown','AuthorizeIp','BootDiag',
                  'ConfigureDC','JoinTargets','Verify','WeakenAD','HardenAD','ReportAD','HardenedOU','MoveToHardenedOU','DefenderBaselineGpo','CreateCisOU',
-                 'Ssh',
+                 'Ssh','BackdoorLogin','BackdoorLoginScoped','BackdoorWhoami','BackdoorShell','BackdoorRunKit','BackdoorLogoff','BackdoorRemove',
                  'GetOnboarding','Onboard','Harden','VerifyDefense',
                  'DefenderCloudOn','DefenderCloudOff','PushMdeExtension',
                  'CloudSeed','CloudHunt','CloudStatus','CloudRemove',
@@ -1941,6 +1941,13 @@ if ($Action -ne 'Menu') {
         'CreateCisOU' { Step-CreateCisOU }
         'CisSplit'    { Step-CisSplit }
         'Ssh'          { Step-SshInto }
+        'BackdoorLogin'       { Step-BackdoorLogin }
+        'BackdoorLoginScoped' { Step-BackdoorLoginScoped }
+        'BackdoorWhoami'      { Step-BackdoorWhoami }
+        'BackdoorShell'       { Step-BackdoorShell }
+        'BackdoorRunKit'      { Step-BackdoorRunKit }
+        'BackdoorLogoff'      { Step-BackdoorLogoff }
+        'BackdoorRemove'      { Step-BackdoorRemove }
         'GetOnboarding'{ Step-GetOnboarding }
         'Onboard'      { Step-Onboard }
         'Harden'       { Step-Harden }
@@ -2068,6 +2075,72 @@ function Menu-Configure {
     } while ($c -notmatch '^0$')
 }
 
+# --- Module 0c: run the framework through an over-privileged app registration -
+# Thin wrappers around cloud/Use-BackdoorCli.ps1 (standalone; signs the CLI in
+# AS the backdoor service principal in an ISOLATED context, so your own
+# 'az login' is never touched). Demo: app reg + run-command rights = SYSTEM on
+# every VM, no user needed.
+function Invoke-BackdoorCli([string]$Act,[string[]]$Extra){
+    $script = Join-Path $HERE 'cloud/Use-BackdoorCli.ps1'
+    if (-not (Test-Path $script)){ Warn "Backdoor CLI script missing: $script"; return }
+    $argv = @('-NoProfile','-File',$script,'-Action',$Act,'-ResourceGroup',$CFG.ResourceGroup)
+    if ($Extra){ $argv += $Extra }
+    ShowCmd "pwsh -File cloud/Use-BackdoorCli.ps1 -Action $Act -ResourceGroup $($CFG.ResourceGroup)$(if($Extra){' '+($Extra -join ' ')})"
+    & pwsh @argv
+}
+function Step-BackdoorLogin       { Narrate "Login the CLI AS the over-privileged app (grants Contributor on the lab RG - the 'too much rights' artifact)."; Invoke-BackdoorCli 'Login' @('-Rights','Contributor') }
+function Step-BackdoorLoginScoped { Narrate "Login the CLI AS the app with ONLY the minimal run-command role (least-privilege contrast)."; Invoke-BackdoorCli 'Login' @('-Rights','Scoped') }
+function Step-BackdoorWhoami      { Invoke-BackdoorCli 'Whoami' }
+function Step-BackdoorShell       { Invoke-BackdoorCli 'Shell' }
+function Step-BackdoorRunKit      { Invoke-BackdoorCli 'RunKit' }
+function Step-BackdoorLogoff      { Invoke-BackdoorCli 'Logoff' }
+function Step-BackdoorRemove      { Invoke-BackdoorCli 'Remove' }
+# Run an existing kit step IN the backdoor CLI context, so every az call inside
+# it is the service principal, not you. Restores your normal context after.
+function Invoke-AsBackdoor([ScriptBlock]$Step,[string]$Label){
+    $bd = Join-Path $CFGDIR 'backdoor-cli'
+    if (-not (Test-Path (Join-Path $bd 'azureProfile.json'))){ Warn "No backdoor session yet. Run 3 -> B -> 1 (login as the app) first."; return }
+    Narrate "Running '$Label' AS THE APP (backdoor CLI context) - every az call below is the service principal, not you."
+    $old = $env:AZURE_CONFIG_DIR
+    $env:AZURE_CONFIG_DIR = $bd
+    try { & $Step } finally { $env:AZURE_CONFIG_DIR = $old }
+    Ok "'$Label' finished as the app. Your normal az context is restored."
+}
+function Menu-Backdoor {
+    do {
+        Header
+        Write-Host "  [3 -> B] BACKDOOR CLI - run the framework as an over-privileged app registration`n" -ForegroundColor Yellow
+        Write-Host "    Demo: an app reg + Azure RBAC (run-command) = SYSTEM on every VM, no user, no password, no endpoint." -ForegroundColor DarkGray
+        Write-Host "    Signs the Azure CLI in AS the app in an ISOLATED context - your own 'az login' is left untouched.`n" -ForegroundColor DarkGray
+        Write-Host "    1) Login as the app  (Contributor on the lab RG - the 'too much rights' artifact)" -ForegroundColor Cyan
+        Write-Host "    2) Login as the app  (scoped: run-command only - least-privilege contrast)"
+        Write-Host "    3) Whoami            (prove it's a service principal + show its rights)" -ForegroundColor Cyan
+        Write-Host "    4) Open a shell in the backdoor context (then run .\DefXDRLabKit.ps1 there)"
+        Write-Host "    5) Run the framework now, as the app"
+        Write-Host "    6) Logoff the backdoor context (your normal az login stays signed in)"
+        Write-Host "    7) REMOVE everything (app, service principal, roles, local credential)" -ForegroundColor Red
+        Write-Host "    -- run the framework's SETUP steps AS the app (into the existing lab RG) --" -ForegroundColor DarkGray
+        Write-Host "    D) Deploy / repair the lab range" -ForegroundColor Cyan
+        Write-Host "    G) Configure the domain  (promote DC + join targets + verify)" -ForegroundColor Cyan
+        Write-Host "    O) Onboard Defender on WIN11"
+        Write-Host "    T) Run an attack technique (menu 5, as the app)"
+        Write-Host "    0) Back`n"
+        $c = Read-Host "  Select"
+        switch ($c) {
+            '1' { Step-BackdoorLogin; Pause }
+            '2' { Step-BackdoorLoginScoped; Pause }
+            '3' { Step-BackdoorWhoami; Pause }
+            '4' { Step-BackdoorShell; Pause }
+            '5' { Step-BackdoorRunKit; Pause }
+            '6' { Step-BackdoorLogoff; Pause }
+            '7' { Step-BackdoorRemove; Pause }
+            'D' { Invoke-AsBackdoor { Step-Deploy } 'Deploy / repair the lab range'; Pause }
+            'G' { Invoke-AsBackdoor { Step-ConfigureDC; Step-JoinTargets; Step-Verify } 'Configure the domain'; Pause }
+            'O' { Invoke-AsBackdoor { Step-Onboard } 'Onboard Defender on WIN11'; Pause }
+            'T' { Invoke-AsBackdoor { Menu-Tests } 'Attack techniques'; Pause }
+        }
+    } while ($c -notmatch '^0$')
+}
 function Menu-Attacker {
     do {
         Header
@@ -2075,10 +2148,12 @@ function Menu-Attacker {
         Write-Host "    This is a plain Kali VM from the Azure Marketplace. Nothing is auto-installed." -ForegroundColor DarkGray
         Write-Host "    SSH in and set up Sliver (or whatever C2 you want) by hand - you own execution.`n" -ForegroundColor DarkGray
         Write-Host "    1) SSH into KALI (opens a live console; prints a Sliver one-liner to paste)" -ForegroundColor Cyan
+        Write-Host "    B) Backdoor CLI - run the framework as an over-privileged app registration" -ForegroundColor Cyan
         Write-Host "    0) Back`n"
         $c = Read-Host "  Select"
         switch -Regex ($c) {
             '^1$' { Step-SshInto; Pause }
+            '^[Bb]$' { Menu-Backdoor }
         }
     } while ($c -notmatch '^0$')
 }

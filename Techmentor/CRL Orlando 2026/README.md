@@ -214,7 +214,7 @@ MAIN MENU
 |------|---------|
 | **1 Lifecycle** | 1 Deploy · 2 Start · 3 Stop (deallocate) · 4 Status · 5 Destroy · 6 Auto-shutdown · 7 Lab settings · 8 Run logs · 9 Authorize my current public IP · **B Boot diagnostics** (boot screenshot + Serial Console on every VM) · D Deploy 2nd copy · X Destroy 2nd copy · C Switch copy |
 | **2 Configuration** | 1 Configure DC01 · 2 Join targets · 3 Verify · 4 Weaken AD · 5 Harden AD · 6 Weakness report · 7 Hardened Systems OU + GPO · 8 Move a box into it · 9 Defender Baseline GPO · A CIS workstation OU · B Finish copy 2 |
-| **3 Attacker box** | 1 SSH into KALI |
+| **3 Attacker box** | 1 SSH into KALI · B Backdoor CLI (run the framework as an over-privileged app registration - isolated `az` context, menu 3 → B) |
 | **4 Blue team** | H Hunt (course queries) · S Device + sensor health · A Alerts (24h) · G Graph sign-in for hunting · K Run a folder of .kql files · E Push MDE.Windows · D/F Defender for Servers on/excluded · 3 CFA + network protection · 4 Verify posture · C Cloud persistence scenario · M Manual fallbacks |
 | **5 Tests** | 1 Run one technique · 2 Run all · T Toggle target (WIN11 ↔ WIN11B) |
 | **6 Advanced** | 1 Deploy Sentinel · 2 Connect data connectors · 3 Open Advanced hunting · 4 Hunting pack |
@@ -285,6 +285,7 @@ Deploy-Sentinel.ps1         Log Analytics workspace + Sentinel + Azure Activity
 Invoke-KqlHunt.ps1          batch-runs the queries\ folder (menu 4 -> K)
 guest/                      scripts pushed into the VMs (DC, join, Defender, MDI, AD weaken/harden, CIS)
 cloud/                      cloud persistence scenario (menu 4 -> C)
+  cloud/Use-BackdoorCli.ps1  run the framework as the over-privileged app reg (menu 3 -> B)
 tools/Split-CisGpo.ps1      splits a CIS GPO backup into per-area GPOs
 queries/                    the course KQL hunts
 diagrams/                   topology and per-technique diagrams (SVG + PNG)
